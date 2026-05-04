@@ -1,0 +1,5 @@
+export const GRIDFINITY_GRID_MM = 42;
+
+export const GRIDFINITY_HEIGHT_UNIT_MM = 7;
+
+export const GRIDFINITY_STANDARD_CLEARANCE_MM = 0.25;

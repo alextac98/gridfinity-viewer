@@ -1,0 +1,407 @@
+.page {
+  --app-bg: #f4f0e8;
+  --surface: #fffaf2;
+  --field: #f8f4ed;
+  --text: #17211f;
+  --text-soft: #263a36;
+  --muted: #5a6965;
+  --panel-heading: #31423f;
+  --border: rgba(23, 33, 31, 0.1);
+  --border-strong: rgba(23, 33, 31, 0.12);
+  --hover: #f4f0e8;
+  --active: #dbe8dd;
+  --brand-accent: #1f6656;
+  --eyebrow: #b34d27;
+  --button-solid: #17211f;
+  --button-solid-text: #fffaf2;
+  --shadow: 0 12px 38px rgba(49, 66, 63, 0.07);
+  --topbar-shadow: 0 12px 38px rgba(49, 66, 63, 0.08);
+  --field-sheen-start: rgba(23, 33, 31, 0.06);
+  --field-sheen-end: rgba(23, 33, 31, 0.02);
+  --preview-bg: #f8f4ed;
+  --grid-line: rgba(23, 33, 31, 0.045);
+  --dash: rgba(23, 33, 31, 0.18);
+  --mark-shadow: 0 20px 50px rgba(23, 33, 31, 0.12);
+  --accent-green: #1f6656;
+  --accent-green-bg: rgba(219, 232, 221, 0.88);
+  --accent-orange: #b34d27;
+  --accent-orange-bg: #fff1e8;
+  --accent-blue: #315f8a;
+  --accent-blue-bg: #e4edf5;
+  --output-strong: #263a36;
+
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--text);
+  font-family: var(--font-geist-sans);
+}
+
+.collapsedPage {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.darkTheme {
+  --app-bg: #101816;
+  --surface: #17211f;
+  --field: #101816;
+  --text: #edf3ef;
+  --text-soft: #edf3ef;
+  --muted: #a5b5af;
+  --panel-heading: #cedbd5;
+  --border: rgba(237, 243, 239, 0.1);
+  --border-strong: rgba(237, 243, 239, 0.12);
+  --hover: #263a36;
+  --active: #24413a;
+  --brand-accent: #69a997;
+  --eyebrow: #ff9b71;
+  --button-solid: #edf3ef;
+  --button-solid-text: #101816;
+  --shadow: 0 12px 38px rgba(0, 0, 0, 0.22);
+  --topbar-shadow: 0 12px 38px rgba(0, 0, 0, 0.22);
+  --field-sheen-start: rgba(237, 243, 239, 0.08);
+  --field-sheen-end: rgba(237, 243, 239, 0.03);
+  --preview-bg: #111b19;
+  --grid-line: rgba(237, 243, 239, 0.055);
+  --dash: rgba(237, 243, 239, 0.18);
+  --mark-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  --accent-green: #8fd4c1;
+  --accent-green-bg: rgba(36, 65, 58, 0.9);
+  --accent-orange: #ff9b71;
+  --accent-orange-bg: #3b261e;
+  --accent-blue: #9dc9f0;
+  --accent-blue-bg: #1d3040;
+  --output-strong: #edf3ef;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px;
+}
+
+.brand,
+.sidebarHeader,
+.sidebarControls,
+.appTab,
+.activeTab,
+.sidebarIconButton,
+.themeToggle,
+.topbar,
+.topbarActions {
+  display: flex;
+  align-items: center;
+}
+
+.sidebarHeader {
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.brand {
+  gap: 10px;
+  min-height: 44px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 760;
+}
+
+.sidebarControls {
+  gap: 8px;
+}
+
+.sidebarIconButton,
+.themeToggle,
+.topbarActions button {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.sidebarIconButton {
+  flex: 0 0 auto;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+}
+
+.sidebarIconButton:hover,
+.themeToggle:hover,
+.topbarActions button:hover,
+.appTab:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, transparent);
+  background: var(--hover);
+}
+
+.appTabs {
+  display: grid;
+  gap: 8px;
+  margin-top: 34px;
+}
+
+.appTab,
+.activeTab {
+  width: 100%;
+  min-height: 50px;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 680;
+  text-align: left;
+}
+
+.appTab span,
+.activeTab span {
+  min-width: 0;
+  flex: 1;
+}
+
+.soonBadge {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--eyebrow) 32%, transparent);
+  border-radius: 999px;
+  padding: 3px 6px;
+  color: var(--eyebrow);
+  background: color-mix(in srgb, var(--eyebrow) 9%, transparent);
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.activeTab {
+  border-color: color-mix(in srgb, var(--brand-accent) 28%, transparent);
+  background: var(--active);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--brand-accent);
+}
+
+.collapsedSidebar {
+  align-items: center;
+  padding: 20px 14px;
+}
+
+.collapsedSidebar .sidebarHeader {
+  justify-content: center;
+  width: 48px;
+}
+
+.collapsedSidebar .sidebarControls {
+  flex-direction: column;
+}
+
+.collapsedSidebar .brand {
+  display: none;
+}
+
+.collapsedSidebar .appTab span,
+.collapsedSidebar .activeTab span,
+.collapsedSidebar .soonBadge,
+.collapsedSidebar .themeToggle span {
+  display: none;
+}
+
+.collapsedSidebar .appTabs {
+  width: 48px;
+}
+
+.collapsedSidebar .appTab,
+.collapsedSidebar .activeTab {
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  padding: 0;
+}
+
+.collapsedSidebar .activeTab {
+  box-shadow: inset 0 -3px 0 var(--brand-accent);
+}
+
+.sidebarBottom {
+  margin-top: auto;
+}
+
+.themeToggle {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 46px;
+  gap: 10px;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 680;
+}
+
+.collapsedSidebar .sidebarBottom {
+  width: 48px;
+}
+
+.collapsedSidebar .themeToggle {
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  padding: 0;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 28px;
+}
+
+.topbar {
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 116px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  background: var(--surface);
+  box-shadow: var(--topbar-shadow);
+}
+
+.eyebrow {
+  color: var(--eyebrow);
+  font-size: 12px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.topbar h1 {
+  margin-top: 6px;
+  font-size: clamp(34px, 4vw, 54px);
+  line-height: 1;
+  font-weight: 780;
+}
+
+.topbar p:last-child {
+  max-width: 720px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.topbarActions {
+  gap: 8px;
+}
+
+.topbarActions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+@media (max-width: 1120px) {
+  .page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .collapsedPage {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .appTabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 18px;
+  }
+
+  .collapsedSidebar {
+    align-items: stretch;
+    padding: 20px;
+  }
+
+  .collapsedSidebar .brand {
+    justify-content: flex-start;
+    width: auto;
+  }
+
+  .collapsedSidebar .sidebarHeader {
+    justify-content: space-between;
+    width: auto;
+  }
+
+  .collapsedSidebar .appTabs {
+    width: auto;
+  }
+
+  .collapsedSidebar .appTab,
+  .collapsedSidebar .activeTab {
+    width: auto;
+  }
+
+  .sidebarBottom,
+  .collapsedSidebar .sidebarBottom {
+    width: auto;
+    margin-top: 14px;
+  }
+
+  .collapsedSidebar .themeToggle {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar,
+  .collapsedSidebar,
+  .workspace {
+    padding: 14px;
+  }
+
+  .brand span {
+    font-size: 17px;
+  }
+
+  .appTabs {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .appTab,
+  .activeTab {
+    flex: 0 0 max-content;
+    min-height: 44px;
+  }
+
+  .collapsedSidebar .appTab,
+  .collapsedSidebar .activeTab {
+    flex-basis: 48px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: auto;
+    padding: 18px;
+  }
+}

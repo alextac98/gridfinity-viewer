@@ -1,0 +1,212 @@
+.appFrame {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(360px, 1fr) minmax(220px, 280px);
+  flex: 1;
+  gap: 14px;
+  margin-top: 16px;
+  min-height: 0;
+}
+
+.panel,
+.preview {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.panel {
+  overflow: auto;
+  padding: 16px;
+}
+
+.panelHeader,
+.previewToolbar,
+.previewToolbar button,
+.outputList button {
+  display: flex;
+  align-items: center;
+}
+
+.panelHeader {
+  gap: 9px;
+  min-height: 34px;
+  color: var(--panel-heading);
+}
+
+.panelHeader h2,
+.previewToolbar span {
+  font-size: 15px;
+  font-weight: 760;
+}
+
+.formShell {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.placeholderField {
+  display: grid;
+  gap: 8px;
+}
+
+.placeholderField span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 640;
+}
+
+.placeholderField div {
+  height: 42px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, var(--field-sheen-start), var(--field-sheen-end)),
+    var(--field);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewToolbar {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+
+.previewToolbar button,
+.outputList button {
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--button-solid);
+  color: var(--button-solid-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.previewSurface {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--preview-bg);
+  background-size: 34px 34px;
+}
+
+.previewSurface::after {
+  position: absolute;
+  inset: 28px;
+  border: 1px dashed var(--dash);
+  border-radius: 8px;
+  content: "";
+}
+
+.previewMark {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  color: var(--accent-green);
+  background: var(--accent-green-bg);
+  box-shadow: var(--mark-shadow);
+}
+
+.previewSurface p {
+  position: absolute;
+  bottom: 44px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.appFrame[data-accent="orange"] .previewMark {
+  color: var(--accent-orange);
+  background: var(--accent-orange-bg);
+}
+
+.appFrame[data-accent="blue"] .previewMark {
+  color: var(--accent-blue);
+  background: var(--accent-blue-bg);
+}
+
+.outputList {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.outputList div {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--field);
+}
+
+.outputList span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+
+.outputList strong {
+  color: var(--output-strong);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.outputList button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+@media (max-width: 1120px) {
+  .appFrame {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .preview {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .appFrame {
+    grid-template-columns: 1fr;
+    flex: 1;
+    overflow: auto;
+  }
+
+  .preview {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 280px;
+  }
+
+  .previewSurface {
+    min-height: 220px;
+  }
+}
