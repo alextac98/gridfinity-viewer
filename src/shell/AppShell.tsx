@@ -10,16 +10,12 @@ import {
   Sun,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AppUpcoming } from "@/apps/AppUpcoming";
 import { apps, getAppPath, type RegisteredAppId } from "./appRegistry";
 import styles from "./AppShell.module.css";
 
-function getInitialTheme(): "light" | "dark" {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
+function getPreferredTheme(): "light" | "dark" {
   const storedTheme = window.localStorage.getItem("gridfinity-theme");
 
   if (storedTheme === "light" || storedTheme === "dark") {
@@ -31,6 +27,25 @@ function getInitialTheme(): "light" | "dark" {
     : "light";
 }
 
+function getServerThemeSnapshot(): "light" {
+  return "light";
+}
+
+function subscribeToThemeStore(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("gridfinity-theme-change", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("gridfinity-theme-change", onStoreChange);
+  };
+}
+
+function setStoredTheme(theme: "light" | "dark") {
+  window.localStorage.setItem("gridfinity-theme", theme);
+  window.dispatchEvent(new Event("gridfinity-theme-change"));
+}
+
 type AppShellProps = {
   activeAppId: RegisteredAppId;
 };
@@ -38,13 +53,13 @@ type AppShellProps = {
 export function AppShell({ activeAppId }: AppShellProps) {
   const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const theme = useSyncExternalStore(
+    subscribeToThemeStore,
+    getPreferredTheme,
+    getServerThemeSnapshot,
+  );
   const activeApp = apps.find((app) => app.id === activeAppId) ?? apps[0];
   const isDark = theme === "dark";
-
-  useEffect(() => {
-    window.localStorage.setItem("gridfinity-theme", theme);
-  }, [theme]);
 
   return (
     <main
@@ -115,7 +130,7 @@ export function AppShell({ activeAppId }: AppShellProps) {
           <button
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             className={styles.themeToggle}
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => setStoredTheme(isDark ? "light" : "dark")}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
             type="button"
           >

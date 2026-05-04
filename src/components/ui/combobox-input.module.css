@@ -1,0 +1,75 @@
+.combobox {
+  position: relative;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0 34px 0 11px;
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.toggleButton {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.toggleButton:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.toggleButton[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  display: grid;
+  max-height: 190px;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 4px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.option {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.option:hover,
+.option[aria-selected="true"] {
+  background: var(--active);
+}

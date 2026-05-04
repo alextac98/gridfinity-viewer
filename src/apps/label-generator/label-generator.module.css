@@ -1,0 +1,709 @@
+.appFrame {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(440px, 1fr) minmax(270px, 320px);
+  flex: 1;
+  gap: 14px;
+  min-height: 0;
+  margin-top: 16px;
+}
+
+.panel,
+.previewPanel {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.panel {
+  clip-path: inset(0 round 8px);
+  overflow: auto;
+  padding: 16px;
+}
+
+.panelHeader,
+.previewToolbar,
+.previewToolbar button,
+.iconButton,
+.primaryButton,
+.summaryCard div,
+.summaryCard a {
+  display: flex;
+  align-items: center;
+}
+
+.panelHeader {
+  gap: 10px;
+  color: var(--panel-heading);
+}
+
+.panelHeader > div,
+.previewToolbar > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.panelHeader h2,
+.previewToolbar h2 {
+  font-size: 15px;
+  font-weight: 760;
+}
+
+.panelHeader p,
+.previewToolbar p,
+.toggleRow small,
+.summaryCard span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.iconButton {
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-soft);
+  background: var(--field);
+  cursor: pointer;
+}
+
+.controlGroup,
+.toggleList {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.detailsSection {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionHeader h3 {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 760;
+}
+
+.sectionHeader p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 680;
+  text-align: right;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fieldLabel,
+.field span {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.fastenerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fastenerOption,
+.sizeOption {
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.fastenerOption {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 92px;
+  padding: 10px 8px;
+}
+
+.fastenerOption span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fastenerOptionPictures {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.fastenerOptionPictures span {
+  overflow: visible;
+  font-size: inherit;
+  font-weight: inherit;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.topProfilePicture,
+.sideProfilePicture {
+  display: block;
+  color: currentColor;
+}
+
+.topProfilePicture {
+  aspect-ratio: 1;
+}
+
+.sideProfilePicture {
+  aspect-ratio: 22 / 7;
+}
+
+.fastenerOptionPictures .topProfilePicture,
+.fastenerOptionPictures .sideProfilePicture {
+  width: 100%;
+}
+
+.topProfilePicture svg,
+.sideProfilePicture svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.customArtworkImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.customArtworkPlaceholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border: 1px dashed color-mix(in srgb, var(--muted) 48%, transparent);
+  border-radius: 6px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 9%, transparent);
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.inlineCheckbox {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.inlineCheckbox input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--brand-accent);
+}
+
+.field .inlineCheckbox span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.disabledField {
+  opacity: 0.58;
+}
+
+.disabledField input {
+  cursor: not-allowed;
+}
+
+.field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.54;
+}
+
+.selectedOption {
+  border-color: color-mix(in srgb, var(--brand-accent) 58%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 13%, var(--field));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-accent) 24%, transparent);
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.twoColumn .field {
+  margin-top: 0;
+}
+
+.detailsGrid .field {
+  margin-top: 0;
+}
+
+.fullDetailField {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0 11px;
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.unitPicker {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 42px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 3px;
+  overflow: hidden;
+  background: var(--field);
+}
+
+.unitPickerThumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: 6px;
+  background: var(--button-solid);
+  transition: transform 160ms ease;
+}
+
+.unitPicker[data-selected="imperial"] .unitPickerThumb {
+  transform: translateX(100%);
+}
+
+.unitPicker button {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.unitPicker button[aria-pressed="true"] {
+  color: var(--button-solid-text);
+}
+
+.standardPicker {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-height: 42px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 3px;
+  overflow: hidden;
+  background: var(--field);
+}
+
+.standardPickerThumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border-radius: 6px;
+  background: var(--button-solid);
+  transition: transform 160ms ease;
+}
+
+.standardPicker[data-selected="din"] .standardPickerThumb {
+  transform: translateX(100%);
+}
+
+.standardPicker[data-selected="both"] .standardPickerThumb {
+  transform: translateX(200%);
+}
+
+.standardPicker button {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standardPicker button[aria-pressed="true"] {
+  color: var(--button-solid-text);
+}
+
+.standardPicker button:disabled {
+  cursor: not-allowed;
+  opacity: 0.44;
+}
+
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.previewToolbar {
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 72px;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+
+.primaryButton {
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 13px;
+  background: var(--button-solid);
+  color: var(--button-solid-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.previewSurface {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 0;
+  padding: 28px;
+  overflow: auto;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--preview-bg);
+  background-size: 32px 32px;
+}
+
+.labelShadow {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: 0 22px 58px rgba(23, 33, 31, 0.16);
+}
+
+.label {
+  container-type: size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 1fr;
+  align-items: stretch;
+  gap: clamp(5px, 6cqh, 12px);
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  padding: clamp(5px, 7cqh, 10px);
+  overflow: hidden;
+  background: #ffffff;
+  color: #000000;
+}
+
+.labelContent {
+  display: grid;
+  grid-template-rows: minmax(0, 0.56fr) minmax(0, 0.44fr);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  gap: clamp(3px, 4cqh, 8px);
+  overflow: hidden;
+}
+
+.labelTopRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  gap: clamp(5px, 5cqh, 10px);
+  overflow: hidden;
+}
+
+.topProfileSlot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.label .topProfilePicture {
+  width: auto;
+  height: 100%;
+}
+
+.secondaryProfileSlot {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.secondaryProfileSlot .sideProfilePicture {
+  width: 100%;
+  height: 100%;
+}
+
+.secondaryProfileSlot .sideProfilePicture svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qrImage {
+  display: block;
+  align-self: stretch;
+  width: auto;
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  min-width: 0;
+  min-height: 0;
+}
+
+.labelCopy {
+  display: grid;
+  grid-template-rows: minmax(0, 0.68fr) minmax(0, 0.32fr);
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  gap: 0;
+  overflow: hidden;
+}
+
+.labelCopy strong {
+  align-self: end;
+  overflow: hidden;
+  font-size: clamp(14px, 28cqh, 40px);
+  line-height: 0.9;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labelCopy span {
+  align-self: start;
+  overflow: hidden;
+  font-size: clamp(7px, 9cqh, 14px);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sizeOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 11px;
+}
+
+.sizeOption span {
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.sizeOption small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--field);
+}
+
+.toggleRow span {
+  display: grid;
+  gap: 3px;
+}
+
+.toggleRow strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.toggleRow input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-accent);
+}
+
+.summaryCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 13px;
+  background: var(--field);
+}
+
+.summaryCard div,
+.summaryCard a {
+  min-width: 0;
+  gap: 8px;
+}
+
+.summaryCard span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summaryCard a {
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 720;
+}
+
+@media (max-width: 1260px) {
+  .appFrame {
+    grid-template-columns: minmax(280px, 340px) minmax(420px, 1fr);
+  }
+
+  .previewPanel {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 760px) {
+  .appFrame {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .previewPanel {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 360px;
+  }
+
+  .previewToolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primaryButton {
+    width: 100%;
+  }
+
+  .previewSurface {
+    padding: 14px;
+  }
+
+  .labelShadow {
+    padding: 0;
+  }
+
+  .label {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .labelCopy strong,
+  .labelCopy span {
+    white-space: normal;
+  }
+
+  .fastenerGrid,
+  .twoColumn,
+  .detailsGrid,
+  .sizeGrid {
+    grid-template-columns: 1fr;
+  }
+}

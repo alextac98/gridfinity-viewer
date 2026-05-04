@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 export type GridfinityAppId =
-  | "label-maker"
+  | "label-generator"
   | "bin-generator"
   | "grid-generator"
   | "model-viewer";

@@ -1,18 +1,18 @@
 import { Box, Cuboid, Grid3X3, Tag } from "lucide-react";
 import { BinGeneratorApp } from "@/apps/bin-generator/BinGeneratorApp";
 import { GridGeneratorApp } from "@/apps/grid-generator/GridGeneratorApp";
-import { LabelMakerApp } from "@/apps/label-maker/LabelMakerApp";
+import { LabelGeneratorApp } from "@/apps/label-generator/LabelGeneratorApp";
 import type { GridfinityAppConfig } from "@/apps/types";
 
 export const apps = [
   {
-    id: "label-maker",
-    name: "Label Maker",
+    id: "label-generator",
+    name: "Label Generator",
     eyebrow: "Labels",
     description:
       "Design printable labels for bins, drawers, and small part organizers.",
     icon: Tag,
-    Component: LabelMakerApp,
+    Component: LabelGeneratorApp,
     accent: "blue",
   },
   {
