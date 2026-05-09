@@ -1,0 +1,64 @@
+.toastRegion {
+  position: fixed;
+  top: 15vh;
+  left: 50%;
+  z-index: 80;
+  display: grid;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  --toast-accent: var(--brand-accent);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid color-mix(in srgb, var(--toast-accent) 74%, var(--border));
+  border-left-width: 7px;
+  border-radius: 8px;
+  padding: 10px 10px 10px 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 680;
+  line-height: 1.35;
+  pointer-events: auto;
+}
+
+.infoToast {
+  --toast-accent: var(--brand-accent);
+}
+
+.warningToast {
+  --toast-accent: #d69a00;
+}
+
+.toast span {
+  min-width: 0;
+}
+
+.toast button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 28%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--toast-accent) 10%, var(--field));
+  color: var(--text);
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .toastRegion {
+    top: 14vh;
+    width: min(420px, calc(100vw - 28px));
+  }
+}

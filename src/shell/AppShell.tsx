@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { AppUpcoming } from "@/apps/AppUpcoming";
+import { ToastProvider } from "./ToastProvider";
 import { apps, getAppPath, type RegisteredAppId } from "./appRegistry";
 import styles from "./AppShell.module.css";
 
@@ -144,39 +145,41 @@ export function AppShell({ activeAppId }: AppShellProps) {
         </div>
       </aside>
 
-      <section
-        aria-labelledby={`${activeApp.id}-tab`}
-        className={styles.workspace}
-        id={`${activeApp.id}-panel`}
-        role="tabpanel"
-      >
-        <header className={styles.topbar}>
-          <div>
-            <p className={styles.eyebrow}>{activeApp.eyebrow}</p>
-            <h1>{activeApp.name}</h1>
-            <p>{activeApp.description}</p>
-          </div>
-          <div className={styles.topbarActions}>
-            <button type="button" aria-label="Save preset">
-              <Save aria-hidden="true" size={18} />
-            </button>
-            <button type="button" aria-label="Export files">
-              <Download aria-hidden="true" size={18} />
-            </button>
-          </div>
-        </header>
+      <ToastProvider>
+        <section
+          aria-labelledby={`${activeApp.id}-tab`}
+          className={styles.workspace}
+          id={`${activeApp.id}-panel`}
+          role="tabpanel"
+        >
+          <header className={styles.topbar}>
+            <div>
+              <p className={styles.eyebrow}>{activeApp.eyebrow}</p>
+              <h1>{activeApp.name}</h1>
+              <p>{activeApp.description}</p>
+            </div>
+            <div className={styles.topbarActions}>
+              <button type="button" aria-label="Save preset">
+                <Save aria-hidden="true" size={18} />
+              </button>
+              <button type="button" aria-label="Export files">
+                <Download aria-hidden="true" size={18} />
+              </button>
+            </div>
+          </header>
 
-        {"Component" in activeApp ? (
-          <activeApp.Component accent={activeApp.accent} />
-        ) : (
-          <AppUpcoming
-            accent={activeApp.accent}
-            description={activeApp.description}
-            icon={activeApp.icon}
-            name={activeApp.name}
-          />
-        )}
-      </section>
+          {"Component" in activeApp ? (
+            <activeApp.Component accent={activeApp.accent} />
+          ) : (
+            <AppUpcoming
+              accent={activeApp.accent}
+              description={activeApp.description}
+              icon={activeApp.icon}
+              name={activeApp.name}
+            />
+          )}
+        </section>
+      </ToastProvider>
     </main>
   );
 }

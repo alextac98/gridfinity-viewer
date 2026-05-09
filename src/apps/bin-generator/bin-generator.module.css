@@ -193,7 +193,7 @@
   flex: 1;
   border: 1px solid color-mix(in srgb, var(--brand-accent) 24%, transparent);
   background: var(--brand-accent);
-  color: #03110f;
+  color: var(--accent-button-text);
 }
 
 .resetIconButton {
@@ -270,17 +270,93 @@
 }
 
 .outputActions {
-  display: grid;
-  gap: 10px;
+  position: relative;
 }
 
 .outputActions button {
   width: 100%;
 }
 
-.outputActions button:disabled {
+.outputActions button:disabled,
+.outputActions button[aria-disabled="true"] {
   cursor: not-allowed;
-  opacity: 0.48;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--field) 82%, var(--surface));
+}
+
+.splitAction {
+  display: flex;
+  gap: 8px;
+}
+
+.outputActions .primaryOutputButton {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 24%, transparent);
+  background: var(--brand-accent);
+  color: var(--accent-button-text);
+}
+
+.outputActions .outputMenuButton {
+  flex: 0 0 42px;
+  width: 42px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 24%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 13%, var(--surface));
+  color: var(--text);
+}
+
+.outputMenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 10;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.outputMenu button {
+  justify-content: flex-start;
+  min-height: 36px;
+  border: 0;
+  background: var(--field);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.outputMenu button[aria-checked="true"] {
+  background: color-mix(in srgb, var(--brand-accent) 18%, var(--field));
+  color: var(--text);
+}
+
+.slicerIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 4px;
+  background-color: #fff;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%);
+}
+
+.prusaSlicerIcon {
+  background-image: url("/slicer-icons/prusaslicer.png");
+}
+
+.orcaSlicerIcon {
+  background-image: url("/slicer-icons/orcaslicer.png");
+}
+
+.bambuStudioIcon {
+  background-image: url("/slicer-icons/bambu-studio.png");
 }
 
 @media (max-width: 1180px) {

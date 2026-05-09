@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronUp,
   Code2,
   Download,
   Layers3,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/openscad/gridfinityExtended";
 import { createOpenScadWorker } from "@/lib/openscad/workerClient";
 import type { OpenScadWorkerRequest, OpenScadWorkerResponse } from "@/lib/openscad/workerTypes";
+import { useToast } from "@/shell/ToastProvider";
 import type { GridfinityAppProps } from "../types";
 import { OpenScadPreview } from "../openscad/OpenScadPreview";
 import styles from "./bin-generator.module.css";
@@ -49,6 +51,17 @@ type R2CacheResponse =
       uploadUrl?: string;
     };
 
+type SlicerActionId = "open-prusaslicer" | "open-orcaslicer" | "open-bambu-slicer";
+type OutputActionId = "download-stl" | SlicerActionId | "download-scad";
+
+type SlicerLauncher = {
+  id: SlicerActionId;
+  label: string;
+  actionLabel: string;
+  iconClass: string;
+  createUrl: (modelUrl: string) => string;
+};
+
 const numberFields: Record<
   NumberField,
   { label: string; min: number; max: number; step: number; suffix: string }
@@ -64,6 +77,51 @@ const numberFields: Record<
 const defaultModelPath = "/default-models/default-gridfinity-bin.stl";
 const defaultParamsKey = createParamsKey(defaultGridfinityBinParameters);
 const GRIDFINITY_LIP_HEIGHT_MM = 3.8;
+const outputActionStorageKey = "gridfinity-bin-generator-output-action";
+
+const slicerLaunchers: SlicerLauncher[] = [
+  {
+    id: "open-prusaslicer",
+    label: "PrusaSlicer",
+    actionLabel: "Open in PrusaSlicer",
+    iconClass: styles.prusaSlicerIcon,
+    createUrl: (modelUrl) => `prusaslicer://open?file=${encodeURIComponent(modelUrl)}`,
+  },
+  {
+    id: "open-orcaslicer",
+    label: "OrcaSlicer",
+    actionLabel: "Open in OrcaSlicer",
+    iconClass: styles.orcaSlicerIcon,
+    createUrl: (modelUrl) => `orcaslicer://open?file=${encodeURIComponent(modelUrl)}`,
+  },
+  {
+    id: "open-bambu-slicer",
+    label: "Bambu Studio",
+    actionLabel: "Open in Bambu Slicer",
+    iconClass: styles.bambuStudioIcon,
+    createUrl: (modelUrl) => {
+      const isApplePlatform =
+        /Mac|iPhone|iPad|iPod/i.test(window.navigator.platform) ||
+        /Mac|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+
+      if (isApplePlatform) {
+        return `bambustudioopen://${encodeURIComponent(modelUrl)}`;
+      }
+
+      return `bambustudio://open?file=${encodeURIComponent(modelUrl)}`;
+    },
+  },
+];
+
+function isOutputActionId(value: string | null): value is OutputActionId {
+  return (
+    value === "download-stl" ||
+    value === "open-prusaslicer" ||
+    value === "open-orcaslicer" ||
+    value === "open-bambu-slicer" ||
+    value === "download-scad"
+  );
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -82,6 +140,13 @@ function downloadUrl(name: string, url: string) {
   const link = document.createElement("a");
   link.href = url;
   link.download = name;
+  link.rel = "noopener";
+  link.click();
+}
+
+function openExternalUrl(url: string) {
+  const link = document.createElement("a");
+  link.href = url;
   link.rel = "noopener";
   link.click();
 }
@@ -122,16 +187,32 @@ function writeOpenScadErrorToConsole(message: string, logs: string[]) {
 }
 
 async function cacheGeneratedStl(cache: R2CacheResponse, stlBytes: Uint8Array) {
-  if (!cache.enabled || cache.hit || !cache.uploadUrl) {
+  if (!cache.enabled || cache.hit) {
+    return;
+  }
+
+  if (!cache.uploadUrl) {
+    console.warn("R2 cache upload skipped because no upload URL was returned.", {
+      objectKey: cache.objectKey,
+      settingsHash: cache.settingsHash,
+    });
     return;
   }
 
   try {
     try {
       await uploadStlToR2(cache.uploadUrl, stlBytes);
+      console.info("R2 cache upload completed directly.", {
+        objectKey: cache.objectKey,
+        settingsHash: cache.settingsHash,
+      });
     } catch (directUploadError) {
       console.warn("Direct R2 upload failed; retrying through API.", directUploadError);
       await uploadStlThroughApi(cache.objectKey, stlBytes);
+      console.info("R2 cache upload completed through API fallback.", {
+        objectKey: cache.objectKey,
+        settingsHash: cache.settingsHash,
+      });
     }
   } catch (error) {
     console.warn("R2 cache upload failed; keeping local STL.", error);
@@ -149,7 +230,8 @@ async function lookupR2Cache(params: GridfinityBinParameters) {
   });
 
   if (!response.ok) {
-    throw new Error(`R2 cache lookup failed with status ${response.status}`);
+    const details = await response.text().catch(() => "");
+    throw new Error(`R2 cache lookup failed with status ${response.status}: ${details}`);
   }
 
   return (await response.json()) as R2CacheResponse;
@@ -175,7 +257,8 @@ async function uploadStlToR2(uploadUrl: string, stlBytes: Uint8Array) {
   });
 
   if (!response.ok) {
-    throw new Error(`R2 cache upload failed with status ${response.status}`);
+    const details = await response.text().catch(() => "");
+    throw new Error(`R2 cache upload failed with status ${response.status}: ${details}`);
   }
 }
 
@@ -190,11 +273,13 @@ async function uploadStlThroughApi(objectKey: string, stlBytes: Uint8Array) {
   });
 
   if (!response.ok) {
-    throw new Error(`R2 cache API upload failed with status ${response.status}`);
+    const details = await response.text().catch(() => "");
+    throw new Error(`R2 cache API upload failed with status ${response.status}: ${details}`);
   }
 }
 
 export function BinGeneratorApp({ accent }: GridfinityAppProps) {
+  const { showToast } = useToast();
   const [hasMounted, setHasMounted] = useState(false);
   const [params, setParams] = useState(defaultGridfinityBinParameters);
   const [draft, setDraft] = useState(
@@ -222,6 +307,17 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
   const activeCacheRef = useRef<R2CacheResponse | null>(null);
   const [cachedDownloadUrl, setCachedDownloadUrl] = useState("");
   const [cachedDownloadParamsKey, setCachedDownloadParamsKey] = useState("");
+  const [selectedOutputAction, setSelectedOutputAction] = useState<OutputActionId>(() => {
+    if (typeof window === "undefined") {
+      return "download-stl";
+    }
+
+    const storedAction = window.localStorage.getItem(outputActionStorageKey);
+
+    return isOutputActionId(storedAction) ? storedAction : "download-stl";
+  });
+  const [isOutputMenuOpen, setIsOutputMenuOpen] = useState(false);
+  const outputMenuRef = useRef<HTMLDivElement | null>(null);
 
   const scadSnippet = useMemo(() => createBinScadSnippet(params), [params]);
   const currentParamsKey = useMemo(() => createParamsKey(params), [params]);
@@ -355,7 +451,19 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
       try {
         const cache = await lookupR2Cache(nextParams);
 
+        if (!cache.enabled) {
+          console.warn("R2 cache disabled; rendering locally.", {
+            reason: cache.reason,
+            objectKey: cache.objectKey,
+            settingsHash: cache.settingsHash,
+          });
+        }
+
         if (cache.enabled && cache.hit) {
+          console.info("R2 cache hit.", {
+            objectKey: cache.objectKey,
+            settingsHash: cache.settingsHash,
+          });
           setRenderStatus("Loading cached STL");
           const cachedStl = await fetchStlFromUrl(cache.downloadUrl);
           setStl(cachedStl);
@@ -368,6 +476,11 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
         }
 
         if (cache.enabled) {
+          console.info("R2 cache miss; rendering locally and uploading in the background.", {
+            objectKey: cache.objectKey,
+            settingsHash: cache.settingsHash,
+            hasUploadUrl: Boolean(cache.uploadUrl),
+          });
           activeCacheRef.current = cache;
         }
       } catch (error) {
@@ -379,6 +492,31 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
     },
     [startRender],
   );
+
+  useEffect(() => {
+    if (!isOutputMenuOpen) {
+      return;
+    }
+
+    const closeOnOutsidePointer = (event: MouseEvent) => {
+      if (!outputMenuRef.current?.contains(event.target as Node)) {
+        setIsOutputMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOutputMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", closeOnOutsidePointer);
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", closeOnOutsidePointer);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOutputMenuOpen]);
 
   useEffect(() => {
     if (!hasMounted) {
@@ -498,6 +636,88 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
     }
 
     downloadBlob("gridfinity-bin.stl", new Blob([toArrayBuffer(stl)], { type: "model/stl" }));
+  };
+
+  const downloadCurrentScad = () => {
+    downloadBlob("gridfinity-bin.scad", new Blob([scadSnippet], { type: "text/plain" }));
+  };
+
+  const currentModelUrl =
+    isPreviewCurrent && currentParamsKey === defaultParamsKey
+      ? new URL(defaultModelPath, window.location.origin).toString()
+      : isPreviewCurrent && cachedDownloadUrl && cachedDownloadParamsKey === currentParamsKey
+        ? new URL(cachedDownloadUrl, window.location.origin).toString()
+        : "";
+
+  const openInSlicer = (launcher: SlicerLauncher) => {
+    if (!currentModelUrl) {
+      return;
+    }
+
+    openExternalUrl(launcher.createUrl(currentModelUrl));
+  };
+
+  const selectedSlicerLauncher = slicerLaunchers.find(
+    (launcher) => launcher.id === selectedOutputAction,
+  );
+  const selectedOutputLabel =
+    selectedOutputAction === "download-stl"
+      ? "Download STL"
+      : selectedOutputAction === "download-scad"
+        ? "Download OpenSCAD"
+        : selectedSlicerLauncher?.actionLabel ?? "Download STL";
+  const unavailableOutputActionText =
+    selectedOutputAction === "download-stl"
+      ? "downloading STL"
+      : selectedOutputAction === "open-prusaslicer"
+        ? "opening in PrusaSlicer"
+        : selectedOutputAction === "open-orcaslicer"
+          ? "opening in OrcaSlicer"
+          : selectedOutputAction === "open-bambu-slicer"
+            ? "opening in Bambu Slicer"
+            : "continuing";
+  const isSelectedOutputEnabled =
+    selectedOutputAction === "download-stl"
+      ? isPreviewCurrent
+      : selectedOutputAction === "download-scad"
+        ? true
+        : Boolean(currentModelUrl && selectedSlicerLauncher);
+  const selectedOutputTitle =
+    !isSelectedOutputEnabled
+      ? "Generate model first"
+      : selectedOutputAction === "download-stl"
+        ? "Download STL"
+        : selectedOutputAction === "download-scad"
+          ? "Download OpenSCAD"
+          : selectedOutputLabel;
+
+  const selectOutputAction = (action: OutputActionId) => {
+    setSelectedOutputAction(action);
+    setIsOutputMenuOpen(false);
+    window.localStorage.setItem(outputActionStorageKey, action);
+  };
+
+  const runSelectedOutputAction = () => {
+    if (!isSelectedOutputEnabled) {
+      showToast(`Please generate the model before ${unavailableOutputActionText}.`, {
+        variant: "info",
+      });
+      return;
+    }
+
+    if (selectedOutputAction === "download-stl") {
+      downloadCurrentStl();
+      return;
+    }
+
+    if (selectedOutputAction === "download-scad") {
+      downloadCurrentScad();
+      return;
+    }
+
+    if (selectedSlicerLauncher) {
+      openInSlicer(selectedSlicerLauncher);
+    }
   };
 
   const commitNumberField = (field: NumberField) => {
@@ -782,27 +1002,77 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
         </div>
 
         <div className={styles.panelActions}>
-          <div className={styles.outputActions}>
-            <button
-              type="button"
-              disabled={!isPreviewCurrent}
-              onClick={downloadCurrentStl}
-            >
-              <Download aria-hidden="true" size={16} />
-              STL
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                downloadBlob(
-                  "gridfinity-bin.scad",
-                  new Blob([scadSnippet], { type: "text/plain" }),
-                )
-              }
-            >
-              <Code2 aria-hidden="true" size={16} />
-              SCAD
-            </button>
+          <div className={styles.outputActions} ref={outputMenuRef}>
+            <div className={styles.splitAction}>
+              <button
+                className={styles.primaryOutputButton}
+                type="button"
+                aria-disabled={!isSelectedOutputEnabled}
+                onClick={runSelectedOutputAction}
+                title={selectedOutputTitle}
+              >
+                {selectedSlicerLauncher ? (
+                  <span
+                    className={`${styles.slicerIcon} ${selectedSlicerLauncher.iconClass}`}
+                    aria-hidden="true"
+                  />
+                ) : selectedOutputAction === "download-scad" ? (
+                  <Code2 aria-hidden="true" size={16} />
+                ) : (
+                  <Download aria-hidden="true" size={16} />
+                )}
+                {selectedOutputLabel}
+              </button>
+              <button
+                aria-expanded={isOutputMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Choose output action"
+                className={styles.outputMenuButton}
+                onClick={() => setIsOutputMenuOpen((current) => !current)}
+                title="Choose output action"
+                type="button"
+              >
+                <ChevronUp aria-hidden="true" size={16} />
+              </button>
+            </div>
+
+            {isOutputMenuOpen ? (
+              <div className={styles.outputMenu} role="menu">
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={selectedOutputAction === "download-stl"}
+                  onClick={() => selectOutputAction("download-stl")}
+                >
+                  <Download aria-hidden="true" size={16} />
+                  Download STL
+                </button>
+                {slicerLaunchers.map((launcher) => (
+                  <button
+                    key={launcher.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={selectedOutputAction === launcher.id}
+                    onClick={() => selectOutputAction(launcher.id)}
+                  >
+                    <span
+                      className={`${styles.slicerIcon} ${launcher.iconClass}`}
+                      aria-hidden="true"
+                    />
+                    {launcher.actionLabel}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={selectedOutputAction === "download-scad"}
+                  onClick={() => selectOutputAction("download-scad")}
+                >
+                  <Code2 aria-hidden="true" size={16} />
+                  Download OpenSCAD
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
