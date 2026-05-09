@@ -38,8 +38,9 @@ function encodePath(path: string) {
 }
 
 function encodeQueryValue(value: string) {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (char) =>
-    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
   );
 }
 
@@ -76,6 +77,13 @@ export function getR2Config(): R2Config | null {
   const bucketName = R2_BUCKET_NAME?.trim();
 
   if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
+    let error_code = 0;
+    if (!accountId) error_code |= 1;
+    if (!accessKeyId) error_code |= 2;
+    if (!secretAccessKey) error_code |= 4;
+    if (!bucketName) error_code |= 8;
+
+    console.warn("R2 configuration is incomplete: ", { error_code });
     return null;
   }
 
@@ -115,7 +123,9 @@ export function createPresignedR2Url({
   });
   const canonicalQuery = [...query.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([name, value]) => `${encodeQueryValue(name)}=${encodeQueryValue(value)}`)
+    .map(
+      ([name, value]) => `${encodeQueryValue(name)}=${encodeQueryValue(value)}`,
+    )
     .join("&");
   const canonicalRequest = [
     method,
@@ -131,7 +141,10 @@ export function createPresignedR2Url({
     getScope(dateStamp),
     sha256(canonicalRequest),
   ].join("\n");
-  const signature = createHmac("sha256", getSigningKey(config.secretAccessKey, dateStamp))
+  const signature = createHmac(
+    "sha256",
+    getSigningKey(config.secretAccessKey, dateStamp),
+  )
     .update(stringToSign)
     .digest("hex");
 
@@ -167,7 +180,10 @@ export function createSignedR2Headers(
     getScope(dateStamp),
     sha256(canonicalRequest),
   ].join("\n");
-  const signature = createHmac("sha256", getSigningKey(config.secretAccessKey, dateStamp))
+  const signature = createHmac(
+    "sha256",
+    getSigningKey(config.secretAccessKey, dateStamp),
+  )
     .update(stringToSign)
     .digest("hex");
   const authorization = [
