@@ -18,3 +18,7 @@ This is one Next.js app that hosts multiple Gridfinity tools. Keep it as a singl
 - `src/lib/gridfinity/` is for shared Gridfinity domain logic such as constants, units, geometry helpers, and future OpenSCAD parameter builders.
 
 When adding or changing a tool, prefer working inside its app folder and only touch `src/shell/appRegistry.ts` when registering or renaming apps. Do not put generator-specific behavior in the shell.
+
+## Browser Testing
+
+Use Playwright for UI bugs, navigation behavior, persistence, responsive layout checks, and other issues that need real browser feedback. Keep tests focused in `tests/e2e/` and prefer small smoke/regression coverage over broad brittle flows. Run `pnpm test:e2e` for the default Chromium suite, or `pnpm test:e2e:ui` while debugging interactively.
