@@ -31,6 +31,7 @@
 .previewToolbar,
 .toolbarStatus,
 .actionRow,
+.panelIconButton,
 .generateButton,
 .resetIconButton,
 .outputActions button {
@@ -48,6 +49,140 @@
 .previewToolbar span {
     font-size: 15px;
     font-weight: 760;
+}
+
+.panelHeader h2 {
+    flex: 1;
+}
+
+.parameterSearch {
+    position: relative;
+    margin-left: auto;
+}
+
+.panelIconButton {
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--field);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.panelIconButton:hover,
+.panelIconButton[aria-expanded="true"] {
+    border-color: color-mix(
+        in srgb,
+        var(--brand-accent) 38%,
+        var(--border-strong)
+    );
+    background: color-mix(in srgb, var(--brand-accent) 12%, var(--field));
+}
+
+.parameterSearchPopover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    width: min(280px, calc(100vw - 48px));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.searchInputRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 0 8px;
+    background: var(--field);
+    color: var(--muted);
+}
+
+.searchInputRow input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.searchInputRow button {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.searchInputRow button:hover {
+    background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
+    color: var(--text);
+}
+
+.searchResults {
+    display: grid;
+    gap: 5px;
+    max-height: 280px;
+    margin-top: 8px;
+    overflow: auto;
+}
+
+.searchResults button {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 9px 10px;
+    background: var(--field);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.searchResults button:hover,
+.searchResults button:focus-visible {
+    border-color: color-mix(
+        in srgb,
+        var(--brand-accent) 38%,
+        var(--border-strong)
+    );
+    outline: 0;
+}
+
+.searchResults strong {
+    font-size: 13px;
+    font-weight: 740;
+}
+
+.searchResults span,
+.searchResults p {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 680;
+}
+
+.searchResults p {
+    margin: 0;
+    padding: 10px;
 }
 
 .panelScroll {

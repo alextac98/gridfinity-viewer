@@ -1,7 +1,8 @@
 "use client";
 
-import { Play, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { Play, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   defaultGridfinityBinParameters,
   getMinimumWallThicknessMm,
@@ -105,6 +106,87 @@ const lipDetailKeys = new Set([
   "lip_non_blocking",
 ]);
 
+type ParameterSearchItem = {
+  id: string;
+  label: string;
+  section: string;
+};
+
+const parameterSearchItems: ParameterSearchItem[] = [
+  ...generalNumberFields.map((field) => ({
+    id: field,
+    label: numberFields[field].label,
+    section: "Size",
+  })),
+  { id: "filled_in", label: "Solid Block", section: "Size" },
+  ...chamberNumberFields.map((field) => ({
+    id: field,
+    label: numberFields[field].label,
+    section: "Compartments",
+  })),
+  ...getExtraOptions("Subdivision Details").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Compartments",
+  })),
+  { id: "label_style", label: "Label Shelf", section: "Label" },
+  { id: "label_position", label: "Label Position", section: "Label" },
+  ...labelDetailOptions.map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Label",
+  })),
+  { id: "fingerslide", label: "Finger Slide", section: "Finger Slide" },
+  ...getExtraOptions("Finger Slide Details").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Finger Slide",
+  })),
+  { id: "flat_base", label: "Flat Base", section: "Base" },
+  { id: "enable_magnets", label: "Corner Magnets", section: "Base" },
+  { id: "center_magnet", label: "Center Magnet", section: "Base" },
+  { id: "enable_screws", label: "Screws", section: "Base" },
+  ...getExtraOptions("Base").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section:
+      option.key === "align_grid_x" || option.key === "align_grid_y"
+        ? "Size"
+        : "Base",
+  })),
+  ...getExtraOptions("Tapered Corner").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Front Access",
+  })),
+  ...getExtraOptions("Sliding Lid").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Front Access",
+  })),
+  { id: "lip_style", label: "Lip Style", section: "Bin Lip" },
+  ...getExtraOptions("Bin Lip").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Bin Lip",
+  })),
+  ...getExtraOptions("Wall Cutouts").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Wall Cutouts",
+  })),
+  ...getExtraOptions("Wall Pattern").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Wall Pattern",
+  })),
+  ...getExtraOptions("Floor Pattern").map((option) => ({
+    id: option.key,
+    label: option.label,
+    section: "Floor Pattern",
+  })),
+];
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -117,6 +199,66 @@ function getExtraOptions(groupTitle: string) {
 
 function getExtraOption(groupTitle: string, key: string) {
   return getExtraOptions(groupTitle).find((option) => option.key === key);
+}
+
+function normalizeSearchText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function fuzzyScore(query: string, value: string) {
+  const normalizedQuery = normalizeSearchText(query);
+  const normalizedValue = normalizeSearchText(value);
+
+  if (!normalizedQuery) {
+    return 1;
+  }
+
+  if (normalizedValue.startsWith(normalizedQuery)) {
+    return 1200 - normalizedValue.length;
+  }
+
+  const includesIndex = normalizedValue.indexOf(normalizedQuery);
+
+  if (includesIndex >= 0) {
+    return 1000 - includesIndex * 5 - normalizedValue.length;
+  }
+
+  let queryIndex = 0;
+  let score = 700;
+
+  for (let valueIndex = 0; valueIndex < normalizedValue.length; valueIndex += 1) {
+    if (normalizedValue[valueIndex] === normalizedQuery[queryIndex]) {
+      queryIndex += 1;
+      score -= valueIndex;
+
+      if (queryIndex === normalizedQuery.length) {
+        return score;
+      }
+    }
+  }
+
+  return null;
+}
+
+function getSearchResults(query: string) {
+  if (!query.trim()) {
+    return parameterSearchItems.slice(0, 8);
+  }
+
+  return parameterSearchItems
+    .map((item) => {
+      const labelScore = fuzzyScore(query, item.label);
+      const sectionScore = fuzzyScore(query, `${item.section} ${item.label}`);
+      const score = Math.max(labelScore ?? -1, sectionScore ?? -1);
+
+      return score >= 0 ? { item, score } : null;
+    })
+    .filter((result): result is { item: ParameterSearchItem; score: number } =>
+      Boolean(result),
+    )
+    .sort((left, right) => right.score - left.score)
+    .map((result) => result.item)
+    .slice(0, 10);
 }
 
 function isDisabledWallCutoutPosition(value: number) {
@@ -166,6 +308,22 @@ export function BinParametersPanel({
   onGenerate,
   onReset,
 }: BinParametersPanelProps) {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchResults = useMemo(() => getSearchResults(searchQuery), [searchQuery]);
+
+  useEffect(() => {
+    if (!isSearchOpen) {
+      return;
+    }
+
+    searchInputRef.current?.focus();
+  }, [isSearchOpen]);
+
   const updateParams = (updater: SetStateAction<GridfinityBinParameters>) => {
     clearRenderError();
     setParams(updater);
@@ -440,162 +598,338 @@ export function BinParametersPanel({
     return option ? renderExtraOption(option) : null;
   };
 
+  const openSectionForSearchResult = (item: ParameterSearchItem) => {
+    setExpandedSections((current) => ({
+      ...current,
+      [item.section]: true,
+    }));
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    window.setTimeout(() => {
+      document
+        .querySelector(`[data-parameter-section="${item.section}"]`)
+        ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
+  };
+
+  const isSectionExpanded = (section: string, defaultExpanded: boolean) =>
+    expandedSections[section] ?? defaultExpanded;
+  const setSectionExpanded = (section: string, expanded: boolean) => {
+    setExpandedSections((current) => ({ ...current, [section]: expanded }));
+  };
+
   return (
     <section className={styles.panel} aria-label="Bin Parameters">
       <div className={styles.panelHeader}>
         <SlidersHorizontal aria-hidden="true" size={18} />
         <h2>Bin Parameters</h2>
+        <div className={styles.parameterSearch}>
+          <button
+            aria-expanded={isSearchOpen}
+            aria-label="Search Parameters"
+            className={styles.panelIconButton}
+            title="Search Parameters"
+            type="button"
+            onClick={() => setIsSearchOpen((current) => !current)}
+          >
+            <Search aria-hidden="true" size={16} />
+          </button>
+          {isSearchOpen ? (
+            <div className={styles.parameterSearchPopover}>
+              <div className={styles.searchInputRow}>
+                <Search aria-hidden="true" size={15} />
+                <input
+                  ref={searchInputRef}
+                  aria-label="Search Parameters"
+                  placeholder="Search Parameters"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                />
+                <button
+                  aria-label="Close Search"
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                >
+                  <X aria-hidden="true" size={15} />
+                </button>
+              </div>
+              <div className={styles.searchResults}>
+                {searchResults.length > 0 ? (
+                  searchResults.map((item) => (
+                    <button
+                      key={`${item.section}-${item.id}`}
+                      type="button"
+                      onClick={() => openSectionForSearchResult(item)}
+                    >
+                      <strong>{item.label}</strong>
+                      <span>{item.section}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p>No Parameters Found</p>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className={styles.panelScroll}>
         <div className={styles.formShell}>
-          <CollapsibleSection title="Size" columns>
-            {generalNumberFields.map((field) =>
-              renderNumberField(field, isSolidBlock && field === "wallThicknessMm"),
-            )}
-            {renderExtraOptionByKey("Base", "align_grid_x")}
-            {renderExtraOptionByKey("Base", "align_grid_y")}
-            <BooleanField
-              label="Solid Block"
-              checked={params.filledIn}
-              onChange={(filledIn) =>
-                updateParams((current) => ({ ...current, filledIn }))
+          <div data-parameter-section="Size">
+            <CollapsibleSection
+              title="Size"
+              columns
+              expanded={isSectionExpanded("Size", true)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Size", expanded)
               }
-            />
-          </CollapsibleSection>
+            >
+              {generalNumberFields.map((field) =>
+                renderNumberField(field, isSolidBlock && field === "wallThicknessMm"),
+              )}
+              {renderExtraOptionByKey("Base", "align_grid_x")}
+              {renderExtraOptionByKey("Base", "align_grid_y")}
+              <BooleanField
+                label="Solid Block"
+                checked={params.filledIn}
+                onChange={(filledIn) =>
+                  updateParams((current) => ({ ...current, filledIn }))
+                }
+              />
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Compartments" columns>
-            {chamberNumberFields.map((field) => renderNumberField(field, isSolidBlock))}
-            {renderExtraOptions("Subdivision Details")}
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Label" columns>
-            <SelectField
-              label="Label Shelf"
-              value={params.labelStyle}
-              options={labelStyleOptions}
-              fullWidth
-              disabled={isSolidBlock}
-              onChange={(labelStyle) =>
-                updateParams((current) => ({ ...current, labelStyle }))
+          <div data-parameter-section="Compartments">
+            <CollapsibleSection
+              title="Compartments"
+              columns
+              expanded={isSectionExpanded("Compartments", true)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Compartments", expanded)
               }
-            />
-            <SelectField
-              label="Label Position"
-              value={params.labelPosition}
-              options={labelPositionOptions}
-              disabled={labelDisabled}
-              onChange={(labelPosition) =>
-                updateParams((current) => ({ ...current, labelPosition }))
-              }
-            />
-            {labelDetailOptions.map(renderExtraOption)}
-          </CollapsibleSection>
+            >
+              {chamberNumberFields.map((field) =>
+                renderNumberField(field, isSolidBlock)
+              )}
+              {renderExtraOptions("Subdivision Details")}
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Finger Slide" columns defaultCollapsed>
-            <SelectField
-              label="Finger Slide"
-              value={params.fingerslide}
-              options={fingerSlideOptions}
-              disabled={isSolidBlock}
-              fullWidth
-              onChange={(fingerslide) =>
-                updateParams((current) => ({ ...current, fingerslide }))
+          <div data-parameter-section="Label">
+            <CollapsibleSection
+              title="Label"
+              columns
+              expanded={isSectionExpanded("Label", true)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Label", expanded)
               }
-            />
-            {renderExtraOptions("Finger Slide Details")}
-          </CollapsibleSection>
+            >
+              <SelectField
+                label="Label Shelf"
+                value={params.labelStyle}
+                options={labelStyleOptions}
+                fullWidth
+                disabled={isSolidBlock}
+                onChange={(labelStyle) =>
+                  updateParams((current) => ({ ...current, labelStyle }))
+                }
+              />
+              <SelectField
+                label="Label Position"
+                value={params.labelPosition}
+                options={labelPositionOptions}
+                disabled={labelDisabled}
+                onChange={(labelPosition) =>
+                  updateParams((current) => ({ ...current, labelPosition }))
+                }
+              />
+              {labelDetailOptions.map(renderExtraOption)}
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Base" columns defaultCollapsed>
-            <SelectField
-              label="Flat Base"
-              value={params.flatBase}
-              options={flatBaseOptions}
-              disabled={isSolidBlock}
-              onChange={(flatBase) =>
-                updateParams((current) => ({ ...current, flatBase }))
+          <div data-parameter-section="Finger Slide">
+            <CollapsibleSection
+              title="Finger Slide"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Finger Slide", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Finger Slide", expanded)
               }
-            />
-            {renderExtraOptionByKey("Base", "efficient_floor")}
-            {renderExtraOptionByKey("Base", "floor_thickness")}
-            {renderExtraOptionByKey("Base", "cavity_floor_radius")}
-            {renderExtraOptionByKey("Base", "sub_pitch")}
-            {renderExtraOptionByKey("Base", "spacer")}
-            {renderExtraOptionByKey("Base", "minimum_printable_pad_size")}
-            {renderExtraOptionByKey("Base", "flat_base_rounded_radius")}
-            {renderExtraOptionByKey("Base", "flat_base_rounded_easyPrint")}
-            <BooleanField
-              label="Corner Magnets"
-              checked={params.magnets}
-              disabled={isSolidBlock}
-              fullWidth
-              onChange={(magnets) =>
-                updateParams((current) => ({ ...current, magnets }))
+            >
+              <SelectField
+                label="Finger Slide"
+                value={params.fingerslide}
+                options={fingerSlideOptions}
+                disabled={isSolidBlock}
+                fullWidth
+                onChange={(fingerslide) =>
+                  updateParams((current) => ({ ...current, fingerslide }))
+                }
+              />
+              {renderExtraOptions("Finger Slide Details")}
+            </CollapsibleSection>
+          </div>
+
+          <div data-parameter-section="Base">
+            <CollapsibleSection
+              title="Base"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Base", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Base", expanded)
               }
-            />
-            {renderExtraOptionByKey("Base", "magnet_size")}
-            {renderExtraOptionByKey("Base", "magnet_easy_release")}
-            {renderExtraOptionByKey("Base", "magnet_side_access")}
-            {renderExtraOptionByKey("Base", "magnet_captive_height")}
-            {renderExtraOptionByKey("Base", "magnet_crush_depth")}
-            {renderExtraOptionByKey("Base", "magnet_chamfer")}
-            <BooleanField
-              label="Center Magnet"
-              checked={centerMagnetEnabled}
-              disabled={isSolidBlock}
-              fullWidth
-              onChange={(enabled) =>
-                updateExtraDefine(
-                  "center_magnet_size",
-                  enabled ? defaultCenterMagnetSize : [0, 0],
-                )
+            >
+              <SelectField
+                label="Flat Base"
+                value={params.flatBase}
+                options={flatBaseOptions}
+                disabled={isSolidBlock}
+                onChange={(flatBase) =>
+                  updateParams((current) => ({ ...current, flatBase }))
+                }
+              />
+              {renderExtraOptionByKey("Base", "efficient_floor")}
+              {renderExtraOptionByKey("Base", "floor_thickness")}
+              {renderExtraOptionByKey("Base", "cavity_floor_radius")}
+              {renderExtraOptionByKey("Base", "sub_pitch")}
+              {renderExtraOptionByKey("Base", "spacer")}
+              {renderExtraOptionByKey("Base", "minimum_printable_pad_size")}
+              {renderExtraOptionByKey("Base", "flat_base_rounded_radius")}
+              {renderExtraOptionByKey("Base", "flat_base_rounded_easyPrint")}
+              <BooleanField
+                label="Corner Magnets"
+                checked={params.magnets}
+                disabled={isSolidBlock}
+                fullWidth
+                onChange={(magnets) =>
+                  updateParams((current) => ({ ...current, magnets }))
+                }
+              />
+              {renderExtraOptionByKey("Base", "magnet_size")}
+              {renderExtraOptionByKey("Base", "magnet_easy_release")}
+              {renderExtraOptionByKey("Base", "magnet_side_access")}
+              {renderExtraOptionByKey("Base", "magnet_captive_height")}
+              {renderExtraOptionByKey("Base", "magnet_crush_depth")}
+              {renderExtraOptionByKey("Base", "magnet_chamfer")}
+              <BooleanField
+                label="Center Magnet"
+                checked={centerMagnetEnabled}
+                disabled={isSolidBlock}
+                fullWidth
+                onChange={(enabled) =>
+                  updateExtraDefine(
+                    "center_magnet_size",
+                    enabled ? defaultCenterMagnetSize : [0, 0],
+                  )
+                }
+              />
+              {renderExtraOptionByKey("Base", "center_magnet_size")}
+              <BooleanField
+                label="Screws"
+                checked={params.screws}
+                disabled={isSolidBlock}
+                fullWidth
+                onChange={(screws) =>
+                  updateParams((current) => ({ ...current, screws }))
+                }
+              />
+              {renderExtraOptionByKey("Base", "screw_size")}
+              {renderExtraOptionByKey("Base", "hole_overhang_remedy")}
+              {renderExtraOptionByKey("Base", "box_corner_attachments_only")}
+            </CollapsibleSection>
+          </div>
+
+          <div data-parameter-section="Front Access">
+            <CollapsibleSection
+              title="Front Access"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Front Access", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Front Access", expanded)
               }
-            />
-            {renderExtraOptionByKey("Base", "center_magnet_size")}
-            <BooleanField
-              label="Screws"
-              checked={params.screws}
-              disabled={isSolidBlock}
-              fullWidth
-              onChange={(screws) =>
-                updateParams((current) => ({ ...current, screws }))
+            >
+              {renderExtraOptions("Tapered Corner")}
+              {renderExtraOptions("Sliding Lid")}
+            </CollapsibleSection>
+          </div>
+
+          <div data-parameter-section="Bin Lip">
+            <CollapsibleSection
+              title="Bin Lip"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Bin Lip", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Bin Lip", expanded)
               }
-            />
-            {renderExtraOptionByKey("Base", "screw_size")}
-            {renderExtraOptionByKey("Base", "hole_overhang_remedy")}
-            {renderExtraOptionByKey("Base", "box_corner_attachments_only")}
-          </CollapsibleSection>
+            >
+              <SelectField
+                label="Lip Style"
+                value={params.lipStyle}
+                options={lipStyleOptions}
+                fullWidth
+                disabled={isSolidBlock}
+                onChange={(lipStyle) =>
+                  updateParams((current) => ({ ...current, lipStyle }))
+                }
+              />
+              {renderExtraOptions("Bin Lip")}
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Front Access" columns defaultCollapsed>
-            {renderExtraOptions("Tapered Corner")}
-            {renderExtraOptions("Sliding Lid")}
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Bin Lip" columns defaultCollapsed>
-            <SelectField
-              label="Lip Style"
-              value={params.lipStyle}
-              options={lipStyleOptions}
-              fullWidth
-              disabled={isSolidBlock}
-              onChange={(lipStyle) =>
-                updateParams((current) => ({ ...current, lipStyle }))
+          <div data-parameter-section="Wall Cutouts">
+            <CollapsibleSection
+              title="Wall Cutouts"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Wall Cutouts", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Wall Cutouts", expanded)
               }
-            />
-            {renderExtraOptions("Bin Lip")}
-          </CollapsibleSection>
+            >
+              {renderExtraOptions("Wall Cutouts")}
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Wall Cutouts" columns defaultCollapsed>
-            {renderExtraOptions("Wall Cutouts")}
-          </CollapsibleSection>
+          <div data-parameter-section="Wall Pattern">
+            <CollapsibleSection
+              title="Wall Pattern"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Wall Pattern", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Wall Pattern", expanded)
+              }
+            >
+              {renderExtraOptions("Wall Pattern")}
+            </CollapsibleSection>
+          </div>
 
-          <CollapsibleSection title="Wall Pattern" columns defaultCollapsed>
-            {renderExtraOptions("Wall Pattern")}
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Floor Pattern" columns defaultCollapsed>
-            {renderExtraOptions("Floor Pattern")}
-          </CollapsibleSection>
+          <div data-parameter-section="Floor Pattern">
+            <CollapsibleSection
+              title="Floor Pattern"
+              columns
+              defaultCollapsed
+              expanded={isSectionExpanded("Floor Pattern", false)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Floor Pattern", expanded)
+              }
+            >
+              {renderExtraOptions("Floor Pattern")}
+            </CollapsibleSection>
+          </div>
         </div>
       </div>
 

@@ -11,6 +11,8 @@ type CollapsibleSectionProps = {
   title: string;
   columns?: boolean;
   defaultCollapsed?: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   children: ReactNode;
 };
 
@@ -18,28 +20,32 @@ export function CollapsibleSection({
   title,
   columns = false,
   defaultCollapsed = false,
+  expanded,
+  onExpandedChange,
   children,
 }: CollapsibleSectionProps) {
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+  const [internalExpanded, setInternalExpanded] = useState(!defaultCollapsed);
+  const isExpanded = expanded ?? internalExpanded;
+  const setExpanded = onExpandedChange ?? setInternalExpanded;
 
   return (
     <section
-      className={`${styles.formSection} ${isCollapsed ? styles.formSectionCollapsed : ""}`}
+      className={`${styles.formSection} ${isExpanded ? "" : styles.formSectionCollapsed}`}
     >
       <button
-        aria-expanded={!isCollapsed}
+        aria-expanded={isExpanded}
         className={styles.sectionToggle}
-        onClick={() => setIsCollapsed((current) => !current)}
+        onClick={() => setExpanded(!isExpanded)}
         type="button"
       >
         <h3>{title}</h3>
         <ChevronUp
           aria-hidden="true"
-          className={isCollapsed ? styles.sectionChevronCollapsed : ""}
+          className={isExpanded ? "" : styles.sectionChevronCollapsed}
           size={16}
         />
       </button>
-      {!isCollapsed ? (
+      {isExpanded ? (
         <div
           className={`${styles.sectionFields} ${columns ? styles.twoColumnFields : ""}`}
         >
