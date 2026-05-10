@@ -12,6 +12,10 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AppUpcoming } from "@/apps/AppUpcoming";
+import type {
+  GridfinityReadyStatusTag,
+  GridfinityUpcomingStatusTag,
+} from "@/apps/types";
 import { ToastProvider } from "./ToastProvider";
 import {
   apps,
@@ -72,6 +76,18 @@ function getActiveAppId(pathname: string): RegisteredAppId {
   const appId = pathname.split("/").filter(Boolean)[0];
 
   return appId && isRegisteredAppId(appId) ? appId : defaultAppId;
+}
+
+function getStatusBadgeClassName(
+  statusTag: GridfinityReadyStatusTag | GridfinityUpcomingStatusTag,
+) {
+  return [
+    styles.statusBadge,
+    statusTag === "alpha" ? styles.alphaStatusBadge : "",
+    statusTag === "beta" ? styles.betaStatusBadge : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function AppWorkspacePanel({
@@ -202,6 +218,12 @@ export function AppShell() {
           {apps.map((app) => {
             const Icon = app.icon;
             const isActive = app.id === activeApp.id;
+            const statusTag =
+              "statusTag" in app
+                ? app.statusTag
+                : "comingSoon" in app && app.comingSoon
+                  ? "soon"
+                  : null;
 
             return (
               <button
@@ -217,8 +239,10 @@ export function AppShell() {
               >
                 <Icon aria-hidden="true" size={19} />
                 <span>{app.name}</span>
-                {"comingSoon" in app && app.comingSoon ? (
-                  <small className={styles.soonBadge}>Soon</small>
+                {statusTag ? (
+                  <small className={getStatusBadgeClassName(statusTag)}>
+                    {statusTag}
+                  </small>
                 ) : null}
               </button>
             );

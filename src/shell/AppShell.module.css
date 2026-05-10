@@ -29,6 +29,10 @@
   --accent-orange-bg: #e6f0ff;
   --accent-blue: #005fcc;
   --accent-blue-bg: #e6f0ff;
+  --status-alpha: #9a6700;
+  --status-alpha-bg: #fff3bf;
+  --status-beta: #0f7a39;
+  --status-beta-bg: #dff8e8;
   --output-strong: #263a36;
   --viewer-bg: #eef4f0;
   --viewer-model: #5db29c;
@@ -87,6 +91,10 @@
   --accent-orange-bg: rgba(22, 73, 103, 0.72);
   --accent-blue: #59c2ff;
   --accent-blue-bg: rgba(22, 73, 103, 0.72);
+  --status-alpha: #ffd24a;
+  --status-alpha-bg: rgba(255, 210, 74, 0.16);
+  --status-beta: #53d47d;
+  --status-beta-bg: rgba(83, 212, 125, 0.16);
   --output-strong: #e6e1cf;
   --viewer-bg: #090d0f;
   --viewer-model: #4fc3a8;
@@ -197,17 +205,31 @@
   flex: 1;
 }
 
-.soonBadge {
+.statusBadge {
   flex: 0 0 auto;
-  border: 1px solid color-mix(in srgb, var(--eyebrow) 32%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--status-color, var(--eyebrow)) 32%, transparent);
   border-radius: 999px;
   padding: 3px 6px;
-  color: var(--eyebrow);
-  background: color-mix(in srgb, var(--eyebrow) 9%, transparent);
+  color: var(--status-color, var(--eyebrow));
+  background: var(
+    --status-bg,
+    color-mix(in srgb, var(--eyebrow) 9%, transparent)
+  );
   font-size: 10px;
   font-weight: 760;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.alphaStatusBadge {
+  --status-color: var(--status-alpha);
+  --status-bg: var(--status-alpha-bg);
+}
+
+.betaStatusBadge {
+  --status-color: var(--status-beta);
+  --status-bg: var(--status-beta-bg);
 }
 
 .activeTab {
@@ -237,7 +259,7 @@
 
 .collapsedSidebar .appTab span,
 .collapsedSidebar .activeTab span,
-.collapsedSidebar .soonBadge {
+.collapsedSidebar .statusBadge {
   display: none;
 }
 

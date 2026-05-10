@@ -12,6 +12,9 @@ export type GridfinityAppProps = {
   accent: GridfinityAppAccent;
 };
 
+export type GridfinityReadyStatusTag = "alpha" | "beta";
+export type GridfinityUpcomingStatusTag = "soon";
+
 type GridfinityAppBaseConfig = {
   id: GridfinityAppId;
   name: string;
@@ -23,11 +26,13 @@ type GridfinityAppBaseConfig = {
 
 export type GridfinityReadyAppConfig = GridfinityAppBaseConfig & {
   comingSoon?: false;
+  statusTag?: GridfinityReadyStatusTag;
   Component: React.ComponentType<GridfinityAppProps>;
 };
 
 export type GridfinityUpcomingAppConfig = GridfinityAppBaseConfig & {
   comingSoon: true;
+  statusTag?: GridfinityUpcomingStatusTag;
   Component?: never;
 };
 

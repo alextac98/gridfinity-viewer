@@ -5,16 +5,6 @@ import type { GridfinityAppConfig } from "@/apps/types";
 
 export const apps = [
   {
-    id: "label-generator",
-    name: "Label Generator",
-    eyebrow: "Labels",
-    description:
-      "Design printable labels for bins, drawers, and small part organizers.",
-    icon: Tag,
-    Component: LabelGeneratorApp,
-    accent: "blue",
-  },
-  {
     id: "bin-generator",
     name: "Bin Generator",
     eyebrow: "Bins",
@@ -32,6 +22,17 @@ export const apps = [
       "Lay out baseplates, wall grids, weighted plates, and printable workbench grids.",
     icon: Grid3X3,
     comingSoon: true,
+    accent: "blue",
+  },
+  {
+    id: "label-generator",
+    name: "Label Generator",
+    eyebrow: "Labels",
+    description:
+      "Design printable labels for bins, drawers, and small part organizers.",
+    icon: Tag,
+    Component: LabelGeneratorApp,
+    statusTag: "alpha",
     accent: "blue",
   },
 ] as const satisfies readonly GridfinityAppConfig[];
