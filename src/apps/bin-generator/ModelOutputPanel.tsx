@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronUp, Code2, Download, PanelLeft } from "lucide-react";
+import {
+  Check,
+  ChevronUp,
+  Code2,
+  Download,
+  PanelLeft,
+  Printer,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { GridfinityBinParameters } from "@/lib/openscad/gridfinityExtended";
 import { useToast } from "@/shell/ToastProvider";
@@ -21,16 +28,74 @@ type SlicerLauncher = {
   createUrl: (modelUrl: string) => string;
 };
 
+type BuildPlatePreset = {
+  id: string;
+  label: string;
+  widthMm: number;
+  depthMm: number;
+};
+
 type ModelOutputPanelProps = {
   params: GridfinityBinParameters;
   dimensions: ModelDimensions | null;
   currentModelUrl: string;
+  groundPlaneDepthMm: string;
+  groundPlaneWidthMm: string;
   isPreviewCurrent: boolean;
+  selectedBuildPlatePresetName: string;
+  showGroundPlane: boolean;
+  onBuildPlatePresetSelect: (preset: BuildPlatePreset) => void;
   onDownloadStl: () => void;
   onDownloadScad: () => void;
+  onGroundPlaneDepthChange: (value: string) => void;
+  onGroundPlaneWidthChange: (value: string) => void;
+  onShowGroundPlaneChange: (showGroundPlane: boolean) => void;
 };
 
 const outputActionStorageKey = "gridfinity-bin-generator-output-action";
+
+const buildPlatePresets: BuildPlatePreset[] = [
+  {
+    id: "voron-250",
+    label: "Voron V2.4/Trident 250",
+    widthMm: 250,
+    depthMm: 250,
+  },
+  {
+    id: "voron-300",
+    label: "Voron V2.4/Trident 300",
+    widthMm: 300,
+    depthMm: 300,
+  },
+  {
+    id: "voron-350",
+    label: "Voron V2.4/Trident 350",
+    widthMm: 350,
+    depthMm: 350,
+  },
+  {
+    id: "prusa-core-one",
+    label: "Prusa CORE One (+)",
+    widthMm: 250,
+    depthMm: 220,
+  },
+  {
+    id: "prusa-core-one-l",
+    label: "Prusa CORE One L",
+    widthMm: 300,
+    depthMm: 300,
+  },
+  { id: "prusa-xl", label: "Prusa XL", widthMm: 360, depthMm: 360 },
+  { id: "bambu-a1-mini", label: "Bambu A1 mini", widthMm: 180, depthMm: 180 },
+  {
+    id: "bambu-a1-p1-x1",
+    label: "Bambu A1 / P1 / X1",
+    widthMm: 256,
+    depthMm: 256,
+  },
+  { id: "bambu-h2d", label: "Bambu H2D", widthMm: 325, depthMm: 320 },
+  { id: "bambu-h2s", label: "Bambu H2S", widthMm: 340, depthMm: 320 },
+];
 
 const slicerLaunchers: SlicerLauncher[] = [
   {
@@ -89,9 +154,17 @@ export function ModelOutputPanel({
   params,
   dimensions,
   currentModelUrl,
+  groundPlaneDepthMm,
+  groundPlaneWidthMm,
   isPreviewCurrent,
+  selectedBuildPlatePresetName,
+  showGroundPlane,
+  onBuildPlatePresetSelect,
   onDownloadStl,
   onDownloadScad,
+  onGroundPlaneDepthChange,
+  onGroundPlaneWidthChange,
+  onShowGroundPlaneChange,
 }: ModelOutputPanelProps) {
   const { showToast } = useToast();
   const [selectedOutputAction, setSelectedOutputAction] =
@@ -105,7 +178,10 @@ export function ModelOutputPanel({
       return isOutputActionId(storedAction) ? storedAction : "download-stl";
     });
   const [isOutputMenuOpen, setIsOutputMenuOpen] = useState(false);
+  const [isBuildPlatePresetMenuOpen, setIsBuildPlatePresetMenuOpen] =
+    useState(false);
   const outputMenuRef = useRef<HTMLDivElement | null>(null);
+  const buildPlatePresetMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isOutputMenuOpen) {
@@ -131,6 +207,31 @@ export function ModelOutputPanel({
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [isOutputMenuOpen]);
+
+  useEffect(() => {
+    if (!showGroundPlane || !isBuildPlatePresetMenuOpen) {
+      return;
+    }
+
+    const closeOnOutsidePointer = (event: MouseEvent) => {
+      if (!buildPlatePresetMenuRef.current?.contains(event.target as Node)) {
+        setIsBuildPlatePresetMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsBuildPlatePresetMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", closeOnOutsidePointer);
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", closeOnOutsidePointer);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isBuildPlatePresetMenuOpen, showGroundPlane]);
 
   const selectedSlicerLauncher = slicerLaunchers.find(
     (launcher) => launcher.id === selectedOutputAction,
@@ -171,6 +272,16 @@ export function ModelOutputPanel({
     window.localStorage.setItem(outputActionStorageKey, action);
   };
 
+  const selectBuildPlatePreset = (preset: BuildPlatePreset) => {
+    onBuildPlatePresetSelect(preset);
+    setIsBuildPlatePresetMenuOpen(false);
+  };
+
+  const isBuildPlatePresetSelected = (preset: BuildPlatePreset) =>
+    selectedBuildPlatePresetName === preset.label &&
+    Number.parseFloat(groundPlaneWidthMm) === preset.widthMm &&
+    Number.parseFloat(groundPlaneDepthMm) === preset.depthMm;
+
   const runSelectedOutputAction = () => {
     if (!isSelectedOutputEnabled) {
       showToast(
@@ -209,7 +320,8 @@ export function ModelOutputPanel({
           <div>
             <span>Model</span>
             <strong>
-              {params.widthUnits} x {params.depthUnits} x {params.heightUnits} bin
+              {params.widthUnits} x {params.depthUnits} x {params.heightUnits}{" "}
+              bin
             </strong>
           </div>
           <div>
@@ -219,6 +331,114 @@ export function ModelOutputPanel({
                 ? `${dimensions.width.toFixed(1)} x ${dimensions.depth.toFixed(1)} x ${dimensions.height.toFixed(1)} mm`
                 : "Generate Model To Measure STL"}
             </strong>
+          </div>
+        </div>
+
+        <div className={styles.groundPlaneControls}>
+          <label className={styles.booleanControl}>
+            <input
+              checked={showGroundPlane}
+              onChange={(event) =>
+                onShowGroundPlaneChange(event.target.checked)
+              }
+              type="checkbox"
+            />
+            <strong>Show ground plane</strong>
+          </label>
+
+          <div
+            className={`${styles.field} ${
+              showGroundPlane ? "" : styles.fieldDisabled
+            }`}
+          >
+            <div className={styles.buildPlateSizeRow}>
+              <div className={styles.tupleGrid}>
+                <label className={styles.tupleItem}>
+                  <span className={styles.tupleSubLabel}>Width</span>
+                  <div className={styles.inputWrap}>
+                    <input
+                      aria-label="Ground plane width"
+                      disabled={!showGroundPlane}
+                      min="1"
+                      onChange={(event) =>
+                        onGroundPlaneWidthChange(event.target.value)
+                      }
+                      step="1"
+                      type="number"
+                      value={groundPlaneWidthMm}
+                    />
+                    <small>mm</small>
+                  </div>
+                </label>
+
+                <label className={styles.tupleItem}>
+                  <span className={styles.tupleSubLabel}>Depth</span>
+                  <div className={styles.inputWrap}>
+                    <input
+                      aria-label="Ground plane depth"
+                      disabled={!showGroundPlane}
+                      min="1"
+                      onChange={(event) =>
+                        onGroundPlaneDepthChange(event.target.value)
+                      }
+                      step="1"
+                      type="number"
+                      value={groundPlaneDepthMm}
+                    />
+                    <small>mm</small>
+                  </div>
+                </label>
+              </div>
+
+              <div
+                className={styles.buildPlatePreset}
+                ref={buildPlatePresetMenuRef}
+              >
+                <button
+                  aria-expanded={showGroundPlane && isBuildPlatePresetMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Choose build plate preset"
+                  className={styles.buildPlatePresetButton}
+                  disabled={!showGroundPlane}
+                  onClick={() =>
+                    setIsBuildPlatePresetMenuOpen((current) => !current)
+                  }
+                  title="Choose build plate preset"
+                  type="button"
+                >
+                  <Printer aria-hidden="true" size={16} />
+                  <ChevronUp aria-hidden="true" size={14} />
+                </button>
+
+                {showGroundPlane && isBuildPlatePresetMenuOpen ? (
+                  <div className={styles.buildPlatePresetMenu} role="menu">
+                    {buildPlatePresets.map((preset) => {
+                      const isSelected = isBuildPlatePresetSelected(preset);
+
+                      return (
+                        <button
+                          aria-checked={isSelected}
+                          key={preset.id}
+                          onClick={() => selectBuildPlatePreset(preset)}
+                          role="menuitemradio"
+                          type="button"
+                        >
+                          <span>
+                            <strong>{preset.label}</strong>
+                            <small>
+                              {preset.widthMm} x {preset.depthMm} mm
+                            </small>
+                          </span>
+                          {isSelected ? (
+                            <Check aria-hidden="true" size={15} />
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>

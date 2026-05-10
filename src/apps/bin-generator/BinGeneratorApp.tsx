@@ -15,7 +15,10 @@ import type {
   OpenScadWorkerResponse,
 } from "@/lib/openscad/workerTypes";
 import type { GridfinityAppProps } from "../types";
-import { OpenScadPreview } from "../openscad/OpenScadPreview";
+import {
+  OpenScadPreview,
+  type GroundPlaneConfig,
+} from "../openscad/OpenScadPreview";
 import { BinParametersPanel } from "./BinParametersPanel";
 import { ModelOutputPanel } from "./ModelOutputPanel";
 import { numberFields, type NumberField } from "./binOptions";
@@ -39,6 +42,74 @@ type R2CacheResponse =
     };
 
 const defaultParamsKey = createParamsKey(defaultGridfinityBinParameters);
+const defaultGroundPlaneDraft = {
+  widthMm: "250",
+  depthMm: "250",
+};
+const groundPlaneStorageKey = "gridfinity-bin-generator-ground-plane";
+
+type GroundPlanePreference = {
+  showGroundPlane: boolean;
+  widthMm: string;
+  depthMm: string;
+  selectedBuildPlatePresetName: string;
+};
+
+function parseGroundPlaneDimension(value: string) {
+  const dimension = Number.parseFloat(value);
+
+  return Number.isFinite(dimension) && dimension > 0 ? dimension : null;
+}
+
+function readGroundPlanePreference(): GroundPlanePreference {
+  if (typeof window === "undefined") {
+    return {
+      showGroundPlane: false,
+      selectedBuildPlatePresetName: "",
+      ...defaultGroundPlaneDraft,
+    };
+  }
+
+  const storedPreference = window.localStorage.getItem(groundPlaneStorageKey);
+
+  if (!storedPreference) {
+    return {
+      showGroundPlane: false,
+      selectedBuildPlatePresetName: "",
+      ...defaultGroundPlaneDraft,
+    };
+  }
+
+  try {
+    const preference = JSON.parse(storedPreference) as Partial<GroundPlanePreference>;
+    const widthMm =
+      typeof preference.widthMm === "string" &&
+      parseGroundPlaneDimension(preference.widthMm) !== null
+        ? preference.widthMm
+        : defaultGroundPlaneDraft.widthMm;
+    const depthMm =
+      typeof preference.depthMm === "string" &&
+      parseGroundPlaneDimension(preference.depthMm) !== null
+        ? preference.depthMm
+        : defaultGroundPlaneDraft.depthMm;
+
+    return {
+      showGroundPlane: preference.showGroundPlane === true,
+      selectedBuildPlatePresetName:
+        typeof preference.selectedBuildPlatePresetName === "string"
+          ? preference.selectedBuildPlatePresetName
+          : "",
+      widthMm,
+      depthMm,
+    };
+  } catch {
+    return {
+      showGroundPlane: false,
+      selectedBuildPlatePresetName: "",
+      ...defaultGroundPlaneDraft,
+    };
+  }
+}
 
 function downloadBlob(name: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
@@ -218,6 +289,9 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
   const activeCacheRef = useRef<R2CacheResponse | null>(null);
   const [cachedDownloadUrl, setCachedDownloadUrl] = useState("");
   const [cachedDownloadParamsKey, setCachedDownloadParamsKey] = useState("");
+  const [groundPlanePreference, setGroundPlanePreference] = useState(
+    readGroundPlanePreference,
+  );
 
   const scadSnippet = useMemo(() => createBinScadSnippet(params), [params]);
   const currentParamsKey = useMemo(() => createParamsKey(params), [params]);
@@ -240,12 +314,38 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
 
     return measureStlDimensions(stl);
   }, [isPreviewCurrent, stl]);
+  const groundPlane = useMemo<GroundPlaneConfig>(() => {
+    const widthMm = parseGroundPlaneDimension(groundPlanePreference.widthMm);
+    const depthMm = parseGroundPlaneDimension(groundPlanePreference.depthMm);
+
+    return {
+      visible:
+        groundPlanePreference.showGroundPlane &&
+        widthMm !== null &&
+        depthMm !== null,
+      printerName: groundPlanePreference.selectedBuildPlatePresetName,
+      widthMm: widthMm ?? 250,
+      depthMm: depthMm ?? 250,
+    };
+  }, [
+    groundPlanePreference.depthMm,
+    groundPlanePreference.selectedBuildPlatePresetName,
+    groundPlanePreference.showGroundPlane,
+    groundPlanePreference.widthMm,
+  ]);
 
   useEffect(() => {
     const mountTimer = window.setTimeout(() => setHasMounted(true), 0);
 
     return () => window.clearTimeout(mountTimer);
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      groundPlaneStorageKey,
+      JSON.stringify(groundPlanePreference),
+    );
+  }, [groundPlanePreference]);
 
   const startRender = useCallback((nextParams: GridfinityBinParameters) => {
     const worker = workerRef.current;
@@ -567,6 +667,7 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
         <OpenScadPreview
           stl={stl}
           errorMessage={renderError}
+          groundPlane={groundPlane}
           isLoading={isRendering}
           loadingMessage={isRendering ? renderStatus : undefined}
         />
@@ -576,9 +677,43 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
         params={params}
         dimensions={dimensions}
         currentModelUrl={currentModelUrl}
+        groundPlaneDepthMm={groundPlanePreference.depthMm}
+        groundPlaneWidthMm={groundPlanePreference.widthMm}
         isPreviewCurrent={isPreviewCurrent}
+        selectedBuildPlatePresetName={
+          groundPlanePreference.selectedBuildPlatePresetName
+        }
+        showGroundPlane={groundPlanePreference.showGroundPlane}
         onDownloadStl={downloadCurrentStl}
         onDownloadScad={downloadCurrentScad}
+        onGroundPlaneDepthChange={(depthMm) =>
+          setGroundPlanePreference((current) => ({
+            ...current,
+            depthMm,
+            selectedBuildPlatePresetName: "",
+          }))
+        }
+        onGroundPlaneWidthChange={(widthMm) =>
+          setGroundPlanePreference((current) => ({
+            ...current,
+            selectedBuildPlatePresetName: "",
+            widthMm,
+          }))
+        }
+        onBuildPlatePresetSelect={(preset) =>
+          setGroundPlanePreference((current) => ({
+            ...current,
+            depthMm: String(preset.depthMm),
+            selectedBuildPlatePresetName: preset.label,
+            widthMm: String(preset.widthMm),
+          }))
+        }
+        onShowGroundPlaneChange={(showGroundPlane) =>
+          setGroundPlanePreference((current) => ({
+            ...current,
+            showGroundPlane,
+          }))
+        }
       />
     </div>
   );

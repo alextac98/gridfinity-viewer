@@ -1,3 +1,10 @@
+# Agents.MD
+
+1. Don't assume. Don't hide confusion. Surface tradeoffs.
+2. Minimum code that solves the problem. Nothing speculative.
+3. Touch only what you must. Clean up your own mess.
+4. Define success criteria. Loop until verified.
+
 ## Repo Organization
 
 This is one Next.js app that hosts multiple Gridfinity tools. Keep it as a single deployable app unless there is a concrete need for separate packages or deployments.

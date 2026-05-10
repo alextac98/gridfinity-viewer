@@ -645,6 +645,109 @@
     line-height: 1.35;
 }
 
+.groundPlaneControls {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.buildPlateSizeRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 8px;
+    align-items: end;
+}
+
+.buildPlatePreset {
+    position: relative;
+    min-width: 0;
+}
+
+.buildPlatePresetButton {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: center;
+    width: 42px;
+    height: 40px;
+    border: 1px solid color-mix(in srgb, var(--brand-accent) 24%, transparent);
+    border-radius: 8px;
+    padding: 0 7px;
+    background: color-mix(in srgb, var(--brand-accent) 13%, var(--surface));
+    color: var(--text);
+    cursor: pointer;
+}
+
+.buildPlatePresetButton:disabled {
+    cursor: not-allowed;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--field) 82%, var(--surface));
+}
+
+.buildPlatePresetMenu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 12;
+    display: grid;
+    gap: 4px;
+    width: min(260px, calc(100vw - 56px));
+    max-height: 310px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.buildPlatePresetMenu button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 8px;
+    padding: 7px 9px;
+    background: var(--field);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.buildPlatePresetMenu button[aria-checked="true"] {
+    background: color-mix(in srgb, var(--brand-accent) 18%, var(--field));
+}
+
+.buildPlatePresetMenu button > span {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.buildPlatePresetMenu strong,
+.buildPlatePresetMenu small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.buildPlatePresetMenu strong {
+    font-size: 13px;
+    font-weight: 760;
+}
+
+.buildPlatePresetMenu small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 680;
+}
+
 .outputActions {
     position: relative;
 }

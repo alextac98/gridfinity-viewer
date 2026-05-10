@@ -708,22 +708,6 @@ export function BinParametersPanel({
             </CollapsibleSection>
           </div>
 
-          <div data-parameter-section="Compartments">
-            <CollapsibleSection
-              title="Compartments"
-              columns
-              expanded={isSectionExpanded("Compartments", true)}
-              onExpandedChange={(expanded) =>
-                setSectionExpanded("Compartments", expanded)
-              }
-            >
-              {chamberNumberFields.map((field) =>
-                renderNumberField(field, isSolidBlock)
-              )}
-              {renderExtraOptions("Subdivision Details")}
-            </CollapsibleSection>
-          </div>
-
           <div data-parameter-section="Label">
             <CollapsibleSection
               title="Label"
@@ -777,6 +761,22 @@ export function BinParametersPanel({
                 }
               />
               {renderExtraOptions("Finger Slide Details")}
+            </CollapsibleSection>
+          </div>
+
+          <div data-parameter-section="Compartments">
+            <CollapsibleSection
+              title="Compartments"
+              columns
+              expanded={isSectionExpanded("Compartments", true)}
+              onExpandedChange={(expanded) =>
+                setSectionExpanded("Compartments", expanded)
+              }
+            >
+              {chamberNumberFields.map((field) =>
+                renderNumberField(field, isSolidBlock)
+              )}
+              {renderExtraOptions("Subdivision Details")}
             </CollapsibleSection>
           </div>
 

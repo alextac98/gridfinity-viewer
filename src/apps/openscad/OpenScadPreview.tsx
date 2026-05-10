@@ -10,10 +10,17 @@ import {
   CanvasTexture,
   Color,
   DirectionalLight,
+  EdgesGeometry,
+  Float32BufferAttribute,
+  FrontSide,
+  Group,
+  LineBasicMaterial,
+  LineSegments,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   OrthographicCamera,
+  PlaneGeometry,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -28,8 +35,16 @@ import styles from "./openscad-preview.module.css";
 type OpenScadPreviewProps = {
   stl?: Uint8Array;
   errorMessage?: string;
+  groundPlane?: GroundPlaneConfig;
   isLoading?: boolean;
   loadingMessage?: string;
+};
+
+export type GroundPlaneConfig = {
+  visible: boolean;
+  widthMm: number;
+  depthMm: number;
+  printerName?: string;
 };
 
 type OrientationView =
@@ -54,6 +69,8 @@ type PreviewTheme = {
   orientationBottom: string;
   orientationText: string;
   orientationStroke: string;
+  groundPlane: string;
+  groundPlaneOutline: string;
 };
 
 const orientationDirections: Record<OrientationView, Vector3> = {
@@ -84,6 +101,8 @@ function getPreviewTheme(element: HTMLElement): PreviewTheme {
     orientationBottom: read("--viewer-cube-bottom", "#ccd7d4"),
     orientationText: read("--viewer-cube-text", "#4f5f5b"),
     orientationStroke: read("--viewer-cube-stroke", "rgba(42, 63, 59, 0.45)"),
+    groundPlane: read("--viewer-ground-plane", "#94a3b8"),
+    groundPlaneOutline: read("--viewer-ground-plane-outline", "#516070"),
   };
 }
 
@@ -170,9 +189,168 @@ function createStlMesh(bytes: Uint8Array, theme: PreviewTheme) {
   return mesh;
 }
 
+function disposeGroundPlane(group: Group) {
+  group.traverse((object) => {
+    if (object instanceof Mesh || object instanceof LineSegments) {
+      object.geometry.dispose();
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
+
+      for (const material of materials) {
+        if (material instanceof MeshBasicMaterial) {
+          material.map?.dispose();
+        }
+
+        material.dispose();
+      }
+    }
+  });
+}
+
+function formatGroundPlaneDimension(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function measureGroundPlaneLabel(text: string) {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return {
+      aspectRatio: Math.max(text.length * 0.6, 1),
+      texture: new CanvasTexture(canvas),
+    };
+  }
+
+  const fontSize = 96;
+  const horizontalPadding = 36;
+  const verticalPadding = 26;
+  context.font = `bold ${fontSize}px Arial, sans-serif`;
+  const measuredTextWidth = context.measureText(text).width;
+  canvas.width = Math.ceil(measuredTextWidth + horizontalPadding * 2);
+  canvas.height = fontSize + verticalPadding * 2;
+  context.font = `bold ${fontSize}px Arial, sans-serif`;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#ffffff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new CanvasTexture(canvas);
+  texture.needsUpdate = true;
+
+  return {
+    aspectRatio: canvas.width / canvas.height,
+    texture,
+  };
+}
+
+function createGroundPlaneMesh(
+  groundPlane: GroundPlaneConfig,
+  modelBounds: Box3,
+  theme: PreviewTheme,
+) {
+  const modelCenter = new Vector3();
+  modelBounds.getCenter(modelCenter);
+  const group = new Group();
+  group.position.set(modelCenter.x, modelCenter.y, modelBounds.min.z - 0.08);
+
+  const plane = new Mesh(
+    new PlaneGeometry(groundPlane.widthMm, groundPlane.depthMm),
+    new MeshBasicMaterial({
+      color: theme.groundPlane,
+      depthWrite: false,
+      opacity: 0.22,
+      side: FrontSide,
+      transparent: true,
+    }),
+  );
+  plane.renderOrder = 0;
+  plane.userData.viewerRole = "groundPlane";
+  group.add(plane);
+
+  const gridSpacingMm = 20;
+  const gridVertices: number[] = [];
+  const halfWidth = groundPlane.widthMm / 2;
+  const halfDepth = groundPlane.depthMm / 2;
+  const firstX = Math.ceil(-halfWidth / gridSpacingMm) * gridSpacingMm;
+  const lastX = Math.floor(halfWidth / gridSpacingMm) * gridSpacingMm;
+  const firstY = Math.ceil(-halfDepth / gridSpacingMm) * gridSpacingMm;
+  const lastY = Math.floor(halfDepth / gridSpacingMm) * gridSpacingMm;
+
+  for (let x = firstX; x <= lastX; x += gridSpacingMm) {
+    gridVertices.push(x, -halfDepth, 0.02, x, halfDepth, 0.02);
+  }
+
+  for (let y = firstY; y <= lastY; y += gridSpacingMm) {
+    gridVertices.push(-halfWidth, y, 0.02, halfWidth, y, 0.02);
+  }
+
+  const gridGeometry = new BufferGeometry();
+  gridGeometry.setAttribute(
+    "position",
+    new Float32BufferAttribute(gridVertices, 3),
+  );
+  const grid = new LineSegments(
+    gridGeometry,
+    new LineBasicMaterial({
+      color: theme.groundPlaneOutline,
+      depthWrite: false,
+      opacity: 0.28,
+      transparent: true,
+    }),
+  );
+  grid.renderOrder = 1;
+  grid.userData.viewerRole = "groundPlaneGrid";
+  group.add(grid);
+
+  const outline = new LineSegments(
+    new EdgesGeometry(plane.geometry),
+    new LineBasicMaterial({
+      color: theme.groundPlaneOutline,
+      depthWrite: false,
+      transparent: true,
+      opacity: 0.86,
+    }),
+  );
+  outline.renderOrder = 2;
+  outline.userData.viewerRole = "groundPlaneOutline";
+  group.add(outline);
+
+  const labelText = `${formatGroundPlaneDimension(groundPlane.widthMm)}x${formatGroundPlaneDimension(
+    groundPlane.depthMm,
+  )}${groundPlane.printerName ? ` (${groundPlane.printerName})` : ""}`;
+  const labelHeight = Math.min(Math.max(groundPlane.depthMm * 0.06, 8), 18);
+  const labelTexture = measureGroundPlaneLabel(labelText);
+  const labelWidth = Math.min(labelHeight * labelTexture.aspectRatio, groundPlane.widthMm * 0.9);
+  const label = new Mesh(
+    new PlaneGeometry(labelWidth, labelHeight),
+    new MeshBasicMaterial({
+      color: theme.groundPlaneOutline,
+      depthWrite: false,
+      map: labelTexture.texture,
+      opacity: 0.9,
+      side: FrontSide,
+      transparent: true,
+    }),
+  );
+  label.position.set(
+    -groundPlane.widthMm / 2 + labelWidth / 2 + labelHeight * 0.45,
+    -groundPlane.depthMm / 2 + labelHeight * 0.9,
+    0.4,
+  );
+  label.renderOrder = 3;
+  label.userData.viewerRole = "groundPlaneLabel";
+  group.add(label);
+
+  return group;
+}
+
 export function OpenScadPreview({
   stl,
   errorMessage,
+  groundPlane,
   isLoading = false,
   loadingMessage,
 }: OpenScadPreviewProps) {
@@ -182,6 +360,8 @@ export function OpenScadPreview({
   const controlsRef = useRef<OrbitControls | null>(null);
   const sceneRef = useRef<Scene | null>(null);
   const modelRef = useRef<Mesh<BufferGeometry> | null>(null);
+  const modelBoundsRef = useRef<Box3 | null>(null);
+  const groundPlaneRef = useRef<Group | null>(null);
   const modelCenterRef = useRef(new Vector3(0, 0, 16));
   const modelRadiusRef = useRef(96);
   const hasSetInitialViewRef = useRef(false);
@@ -290,6 +470,34 @@ export function OpenScadPreview({
         });
       }
 
+      if (groundPlaneRef.current) {
+        groundPlaneRef.current.traverse((object) => {
+          if (object instanceof Mesh) {
+            const material = Array.isArray(object.material)
+              ? object.material[0]
+              : object.material;
+
+            if (material instanceof MeshBasicMaterial) {
+              material.color.set(
+                object.userData.viewerRole === "groundPlaneLabel"
+                  ? nextTheme.groundPlaneOutline
+                  : nextTheme.groundPlane,
+              );
+            }
+          }
+
+          if (object instanceof LineSegments) {
+            const material = Array.isArray(object.material)
+              ? object.material[0]
+              : object.material;
+
+            if (material instanceof LineBasicMaterial) {
+              material.color.set(nextTheme.groundPlaneOutline);
+            }
+          }
+        });
+      }
+
       const cubeMaterials = Array.isArray(orientationScene.cube.material)
         ? orientationScene.cube.material
         : [orientationScene.cube.material];
@@ -361,6 +569,10 @@ export function OpenScadPreview({
     let frame = 0;
     const animate = () => {
       frame = requestAnimationFrame(animate);
+      if (groundPlaneRef.current) {
+        groundPlaneRef.current.visible =
+          camera.position.z >= groundPlaneRef.current.position.z;
+      }
       controls.update();
       renderer.render(scene, camera);
       syncOrientation();
@@ -383,6 +595,8 @@ export function OpenScadPreview({
       cameraRef.current = null;
       controlsRef.current = null;
       sceneRef.current = null;
+      groundPlaneRef.current = null;
+      modelBoundsRef.current = null;
     };
   }, [snapToView]);
 
@@ -396,9 +610,10 @@ export function OpenScadPreview({
     if (modelRef.current) {
       scene.remove(modelRef.current);
     }
+    modelRef.current = null;
+    modelBoundsRef.current = null;
 
     if (!stl) {
-      modelRef.current = null;
       return;
     }
 
@@ -429,6 +644,7 @@ export function OpenScadPreview({
     const size = new Vector3();
     bounds.getCenter(modelCenterRef.current);
     bounds.getSize(size);
+    modelBoundsRef.current = bounds.clone();
     modelRadiusRef.current = Math.max(size.x, size.y, size.z, 42);
     controlsRef.current?.target.copy(modelCenterRef.current);
     controlsRef.current?.update();
@@ -444,6 +660,36 @@ export function OpenScadPreview({
       scene.remove(model);
     };
   }, [snapToView, stl]);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    const modelBounds = modelBoundsRef.current;
+    const host = hostRef.current;
+    const theme = themeRef.current ?? (host ? getPreviewTheme(host) : null);
+
+    if (groundPlaneRef.current) {
+      scene?.remove(groundPlaneRef.current);
+      disposeGroundPlane(groundPlaneRef.current);
+      groundPlaneRef.current = null;
+    }
+
+    if (!scene || !modelBounds || !theme || !groundPlane?.visible) {
+      return;
+    }
+
+    const nextGroundPlane = createGroundPlaneMesh(groundPlane, modelBounds, theme);
+    groundPlaneRef.current = nextGroundPlane;
+    scene.add(nextGroundPlane);
+
+    return () => {
+      scene.remove(nextGroundPlane);
+      disposeGroundPlane(nextGroundPlane);
+
+      if (groundPlaneRef.current === nextGroundPlane) {
+        groundPlaneRef.current = null;
+      }
+    };
+  }, [groundPlane, stl]);
 
   const viewerErrorMessage = viewerError && viewerError.stl === stl ? viewerError.message : "";
   const visibleError = errorMessage || viewerErrorMessage;
