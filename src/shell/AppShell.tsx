@@ -111,7 +111,19 @@ function AppWorkspacePanel({
         <div className={styles.topbarTitle}>
           <h1>{app.name}</h1>
         </div>
-        <p className={styles.topbarDescription}>{app.description}</p>
+        <div className={styles.topbarMeta}>
+          <p className={styles.topbarDescription}>{app.description}</p>
+          {app.attribution ? (
+            <a
+              className={styles.topbarAttribution}
+              href={app.attribution.href}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Powered by {app.attribution.label}
+            </a>
+          ) : null}
+        </div>
       </header>
 
       {!app.comingSoon ? (

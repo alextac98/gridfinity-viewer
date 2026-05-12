@@ -10,7 +10,11 @@ export const apps = [
     name: "Bin Generator",
     eyebrow: "Bins",
     description:
-      "Configure parametric Gridfinity bins, compartments, scoops, and magnet holes.",
+      "Generate Gridfinity bins, complete with compartments, scoops, and magnet holes.",
+    attribution: {
+      label: "Gridfinity Extended",
+      href: "https://github.com/ostat/gridfinity_extended_openscad",
+    },
     icon: Box,
     Component: BinGeneratorApp,
     accent: "blue",
@@ -19,8 +23,11 @@ export const apps = [
     id: "grid-generator",
     name: "Grid Generator",
     eyebrow: "Baseplates",
-    description:
-      "Lay out baseplates, wall grids, weighted plates, and printable workbench grids.",
+    description: "Generate Gridfinity standard grids for all sizes and shapes.",
+    attribution: {
+      label: "Gridfinity Extended",
+      href: "https://github.com/ostat/gridfinity_extended_openscad",
+    },
     icon: Grid3X3,
     Component: GridGeneratorApp,
     statusTag: "alpha",

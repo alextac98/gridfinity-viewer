@@ -352,14 +352,33 @@
   font-weight: 780;
 }
 
-.topbarDescription {
+.topbarMeta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
   max-width: 620px;
   margin-left: auto;
+}
+
+.topbarDescription {
+  margin: 0;
   color: var(--muted);
   font-size: 14px;
   font-weight: 620;
   line-height: 1.4;
   text-align: right;
+}
+
+.topbarAttribution {
+  color: var(--eyebrow);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.topbarAttribution:hover {
+  text-decoration: underline;
 }
 
 .aboutOverlay {
@@ -533,9 +552,13 @@
     padding: 16px;
   }
 
-  .topbarDescription {
+  .topbarMeta {
+    justify-items: start;
     max-width: none;
     margin-left: 0;
+  }
+
+  .topbarDescription {
     text-align: left;
   }
 }

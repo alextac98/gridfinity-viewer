@@ -14,6 +14,10 @@ type GridfinityAppBaseConfig = {
   name: string;
   eyebrow: string;
   description: string;
+  attribution?: {
+    label: string;
+    href: string;
+  };
   icon: LucideIcon;
   accent: GridfinityAppAccent;
 };
