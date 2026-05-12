@@ -4,6 +4,7 @@ import {
   type OpenScadDefineValue,
   type GridfinityBinParameters,
 } from "./gridfinityExtended";
+import type { OpenScadCacheModel } from "./modelCache";
 
 export const gridfinityBinCacheModel = "gridfinity-basic-cup";
 
@@ -101,3 +102,12 @@ export function isGridfinityBinParameters(value: unknown): value is GridfinityBi
     isExtraDefines(params.extraDefines)
   );
 }
+
+export const gridfinityBinCacheDefinition = {
+  id: "bin-generator",
+  cacheModel: gridfinityBinCacheModel,
+  outputFileName: "gridfinity-bin.stl",
+  isParameters: isGridfinityBinParameters,
+  createCanonicalSettings: (params: unknown) =>
+    createCanonicalBinSettings(params as GridfinityBinParameters),
+} satisfies OpenScadCacheModel;

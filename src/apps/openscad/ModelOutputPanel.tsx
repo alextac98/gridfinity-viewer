@@ -9,10 +9,14 @@ import {
   Printer,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { GridfinityBinParameters } from "@/lib/openscad/gridfinityExtended";
 import { useToast } from "@/shell/ToastProvider";
-import type { ModelDimensions } from "./stlDimensions";
-import styles from "./bin-generator.module.css";
+import styles from "./generator.module.css";
+
+export type ModelDimensions = {
+  width: number;
+  depth: number;
+  height: number;
+};
 
 type SlicerActionId =
   | "open-prusaslicer"
@@ -36,7 +40,7 @@ type BuildPlatePreset = {
 };
 
 type ModelOutputPanelProps = {
-  params: GridfinityBinParameters;
+  modelSummary: string;
   dimensions: ModelDimensions | null;
   currentModelUrl: string;
   groundPlaneDepthMm: string;
@@ -50,9 +54,8 @@ type ModelOutputPanelProps = {
   onGroundPlaneDepthChange: (value: string) => void;
   onGroundPlaneWidthChange: (value: string) => void;
   onShowGroundPlaneChange: (showGroundPlane: boolean) => void;
+  storageKey: string;
 };
-
-const outputActionStorageKey = "gridfinity-bin-generator-output-action";
 
 const buildPlatePresets: BuildPlatePreset[] = [
   {
@@ -151,7 +154,7 @@ function openExternalUrl(url: string) {
 }
 
 export function ModelOutputPanel({
-  params,
+  modelSummary,
   dimensions,
   currentModelUrl,
   groundPlaneDepthMm,
@@ -165,6 +168,7 @@ export function ModelOutputPanel({
   onGroundPlaneDepthChange,
   onGroundPlaneWidthChange,
   onShowGroundPlaneChange,
+  storageKey,
 }: ModelOutputPanelProps) {
   const { showToast } = useToast();
   const [selectedOutputAction, setSelectedOutputAction] =
@@ -173,7 +177,7 @@ export function ModelOutputPanel({
         return "download-stl";
       }
 
-      const storedAction = window.localStorage.getItem(outputActionStorageKey);
+      const storedAction = window.localStorage.getItem(storageKey);
 
       return isOutputActionId(storedAction) ? storedAction : "download-stl";
     });
@@ -269,7 +273,7 @@ export function ModelOutputPanel({
   const selectOutputAction = (action: OutputActionId) => {
     setSelectedOutputAction(action);
     setIsOutputMenuOpen(false);
-    window.localStorage.setItem(outputActionStorageKey, action);
+    window.localStorage.setItem(storageKey, action);
   };
 
   const selectBuildPlatePreset = (preset: BuildPlatePreset) => {
@@ -319,10 +323,7 @@ export function ModelOutputPanel({
         <div className={styles.outputList}>
           <div>
             <span>Model</span>
-            <strong>
-              {params.widthUnits} x {params.depthUnits} x {params.heightUnits}{" "}
-              bin
-            </strong>
+            <strong>{modelSummary}</strong>
           </div>
           <div>
             <span>Dimensions</span>

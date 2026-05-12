@@ -24,8 +24,8 @@ import {
   ExtraOptionField,
   NumberInputField,
   SelectField,
-} from "./parameterControls";
-import styles from "./bin-generator.module.css";
+} from "@/apps/openscad/parameterControls";
+import styles from "@/apps/openscad/generator.module.css";
 
 type BinParametersPanelProps = {
   params: GridfinityBinParameters;

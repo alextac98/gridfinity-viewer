@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { gridfinityBinCacheModel } from "@/lib/openscad/binCache";
+import {
+  getOpenScadCacheModel,
+  isValidModelObjectKey,
+} from "@/lib/openscad/modelCache";
 import {
   createR2ObjectUrl,
   createSignedR2Headers,
@@ -8,13 +11,18 @@ import {
 
 const maxUploadBytes = 25 * 1024 * 1024;
 
-function isValidObjectKey(value: string) {
-  return new RegExp(
-    `^models/${gridfinityBinCacheModel}/source-[a-f0-9]{12}/[a-f0-9]{64}\\.stl$`,
-  ).test(value);
-}
+type RouteContext = {
+  params: Promise<{ modelId: string }>;
+};
 
-export async function POST(request: Request) {
+export async function POST(request: Request, context: RouteContext) {
+  const { modelId } = await context.params;
+  const model = getOpenScadCacheModel(modelId);
+
+  if (!model) {
+    return NextResponse.json({ error: "Unknown OpenSCAD model." }, { status: 404 });
+  }
+
   const config = getR2Config();
 
   if (!config) {
@@ -23,7 +31,7 @@ export async function POST(request: Request) {
 
   const objectKey = request.headers.get("x-r2-object-key") ?? "";
 
-  if (!isValidObjectKey(objectKey)) {
+  if (!isValidModelObjectKey(model, objectKey)) {
     return NextResponse.json({ error: "Invalid R2 object key." }, { status: 400 });
   }
 

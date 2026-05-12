@@ -1,11 +1,11 @@
-import { createHash } from "crypto";
 import { NextResponse } from "next/server";
-import {
-  createCanonicalBinSettings,
-  gridfinityBinCacheModel,
-  isGridfinityBinParameters,
-} from "@/lib/openscad/binCache";
 import { getGridfinityExtendedSourceFingerprint } from "@/lib/openscad/sourceFingerprint";
+import {
+  createCachedObjectApiUrl,
+  getOpenScadCacheModel,
+  sha256,
+  stableStringify,
+} from "@/lib/openscad/modelCache";
 import {
   createPresignedR2Url,
   getR2Config,
@@ -15,30 +15,18 @@ type CacheRequest = {
   params?: unknown;
 };
 
-function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+type RouteContext = {
+  params: Promise<{ modelId: string }>;
+};
+
+export async function POST(request: Request, context: RouteContext) {
+  const { modelId } = await context.params;
+  const model = getOpenScadCacheModel(modelId);
+
+  if (!model) {
+    return NextResponse.json({ error: "Unknown OpenSCAD model." }, { status: 404 });
   }
 
-  if (value && typeof value === "object") {
-    return `{${Object.entries(value)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
-      .join(",")}}`;
-  }
-
-  return JSON.stringify(value);
-}
-
-function sha256(value: string) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function createCachedObjectApiUrl(objectKey: string) {
-  return `/api/bin-generator/r2-cache/object?key=${encodeURIComponent(objectKey)}`;
-}
-
-export async function POST(request: Request) {
   let body: CacheRequest;
 
   try {
@@ -47,14 +35,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  if (!isGridfinityBinParameters(body.params)) {
-    return NextResponse.json({ error: "Invalid bin parameters." }, { status: 400 });
+  if (!model.isParameters(body.params)) {
+    return NextResponse.json({ error: "Invalid model parameters." }, { status: 400 });
   }
 
   const config = getR2Config();
   const sourceFingerprint = await getGridfinityExtendedSourceFingerprint();
-  const cachePrefix = `models/${gridfinityBinCacheModel}/source-${sourceFingerprint}`;
-  const canonicalSettings = createCanonicalBinSettings(body.params);
+  const cachePrefix = `models/${model.cacheModel}/source-${sourceFingerprint}`;
+  const canonicalSettings = model.createCanonicalSettings(body.params);
   const settingsHash = sha256(stableStringify(canonicalSettings));
   const objectKey = `${cachePrefix}/${settingsHash}.stl`;
 
@@ -62,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       enabled: false,
       reason: "R2 cache is not configured.",
-      model: gridfinityBinCacheModel,
+      model: model.cacheModel,
       sourceFingerprint,
       settingsHash,
       objectKey,
@@ -86,11 +74,11 @@ export async function POST(request: Request) {
     return NextResponse.json({
       enabled: true,
       hit: true,
-      model: gridfinityBinCacheModel,
+      model: model.cacheModel,
       sourceFingerprint,
       settingsHash,
       objectKey,
-      downloadUrl: createCachedObjectApiUrl(objectKey),
+      downloadUrl: createCachedObjectApiUrl(model.id, objectKey),
     });
   }
 
@@ -105,7 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       enabled: false,
       reason: `R2 cache lookup failed with status ${lookupResponse.status}.`,
-      model: gridfinityBinCacheModel,
+      model: model.cacheModel,
       sourceFingerprint,
       settingsHash,
       objectKey,
@@ -115,7 +103,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     enabled: true,
     hit: false,
-    model: gridfinityBinCacheModel,
+    model: model.cacheModel,
     sourceFingerprint,
     settingsHash,
     objectKey,
@@ -125,6 +113,6 @@ export async function POST(request: Request) {
       method: "PUT",
       expiresSeconds: 10 * 60,
     }),
-    downloadUrl: createCachedObjectApiUrl(objectKey),
+    downloadUrl: createCachedObjectApiUrl(model.id, objectKey),
   });
 }

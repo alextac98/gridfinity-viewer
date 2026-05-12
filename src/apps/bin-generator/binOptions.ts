@@ -1,4 +1,8 @@
 import type { GridfinityBinParameters } from "@/lib/openscad/gridfinityExtended";
+import type {
+  ParameterOption,
+  ParameterOptionGroup,
+} from "@/apps/openscad/parameterTypes";
 
 export type NumberField = keyof Pick<
   GridfinityBinParameters,
@@ -10,45 +14,8 @@ export type NumberField = keyof Pick<
   | "wallThicknessMm"
 >;
 
-export type ExtraOptionBase = {
-  key: string;
-  label: string;
-  fullWidth?: boolean;
-};
-
-export type UnitSuffix = string | readonly (string | undefined)[];
-
-export type ExtraOption =
-  | (ExtraOptionBase & {
-      type: "boolean";
-    })
-  | (ExtraOptionBase & {
-      type: "number";
-      min?: number;
-      max?: number;
-      step?: number;
-      suffix?: string;
-    })
-  | (ExtraOptionBase & {
-      type: "text";
-    })
-  | (ExtraOptionBase & {
-      type: "select";
-      options: readonly { value: string | number; label: string }[];
-    })
-  | (ExtraOptionBase & {
-      type: "tuple";
-      labels?: readonly string[];
-      valueKind?: "number" | "boolean" | "fingerSlideSides";
-      step?: number;
-      suffix?: UnitSuffix;
-    });
-
-export type ExtraOptionGroup = {
-  title: string;
-  columns?: boolean;
-  options: readonly ExtraOption[];
-};
+export type ExtraOption = ParameterOption;
+export type ExtraOptionGroup = ParameterOptionGroup;
 
 export const numberFields: Record<
   NumberField,

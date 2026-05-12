@@ -1,4 +1,4 @@
-import type { OpenScadDefineValue } from "./gridfinityExtended";
+import type { OpenScadDefineValue } from "./defines";
 
 export type OpenScadWorkerRenderRequest = {
   type: "render";

@@ -1,3 +1,6 @@
+import { formatScadValue, type OpenScadDefineValue } from "./defines";
+export { formatScadValue } from "./defines";
+
 export const gridfinityExtendedRoot =
   "/openscad/gridfinity_extended_openscad";
 
@@ -70,11 +73,7 @@ export const gridfinityExtendedFiles = [
   "modules/utility/wallcutout.scad",
 ] as const;
 
-export type OpenScadDefineValue =
-  | string
-  | number
-  | boolean
-  | readonly OpenScadDefineValue[];
+export type { OpenScadDefineValue } from "./defines";
 
 export type GridfinityBinExtraDefines = Record<string, OpenScadDefineValue>;
 
@@ -229,22 +228,6 @@ export const defaultGridfinityBinParameters: GridfinityBinParameters = {
     wallcutout_horizontal_corner_radius: 5,
   },
 };
-
-export function formatScadValue(value: OpenScadDefineValue): string {
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => formatScadValue(item)).join(", ")}]`;
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? String(value) : "0";
-  }
-
-  return JSON.stringify(value);
-}
 
 function toBooleanNumberTuple(
   value: OpenScadDefineValue | undefined,

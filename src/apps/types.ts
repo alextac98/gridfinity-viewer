@@ -1,11 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 
-export type GridfinityAppId =
-  | "label-generator"
-  | "bin-generator"
-  | "grid-generator"
-  | "model-viewer";
-
 export type GridfinityAppAccent = "orange" | "green" | "blue";
 
 export type GridfinityAppProps = {
@@ -16,7 +10,7 @@ export type GridfinityReadyStatusTag = "alpha" | "beta";
 export type GridfinityUpcomingStatusTag = "soon";
 
 type GridfinityAppBaseConfig = {
-  id: GridfinityAppId;
+  id: string;
   name: string;
   eyebrow: string;
   description: string;

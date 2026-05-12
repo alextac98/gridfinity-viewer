@@ -3,9 +3,9 @@
 import { ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { OpenScadDefineValue } from "@/lib/openscad/gridfinityExtended";
-import type { ExtraOption, UnitSuffix } from "./binOptions";
-import styles from "./bin-generator.module.css";
+import type { OpenScadDefineValue } from "@/lib/openscad/defines";
+import type { ParameterOption, UnitSuffix } from "./parameterTypes";
+import styles from "./generator.module.css";
 
 type CollapsibleSectionProps = {
   title: string;
@@ -410,7 +410,7 @@ export function FingerSlideSidesField({
 }
 
 type ExtraOptionFieldProps = {
-  option: ExtraOption;
+  option: ParameterOption;
   value: OpenScadDefineValue | undefined;
   disabled?: boolean;
   onChange: (key: string, value: OpenScadDefineValue) => void;
