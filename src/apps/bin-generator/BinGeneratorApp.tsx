@@ -18,7 +18,7 @@ import { useGroundPlanePreference } from "../openscad/useGroundPlanePreference";
 import { useOpenScadModel } from "../openscad/useOpenScadModel";
 import { BinParametersPanel } from "./BinParametersPanel";
 import { numberFields, type NumberField } from "./binOptions";
-import { measureStlDimensions } from "./stlDimensions";
+import { measureStlDimensions } from "../openscad/stlDimensions";
 
 const binSettingsStorageKey = "gridfinity-bin-generator-settings";
 const groundPlaneStorageKey = "gridfinity-bin-generator-ground-plane";

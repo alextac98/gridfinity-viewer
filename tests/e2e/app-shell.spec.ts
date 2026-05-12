@@ -47,3 +47,41 @@ test("restores label settings after a reload", async ({ page }) => {
   await page.reload();
   await expect(page.getByLabel("Additional Text")).toHaveValue("Reload me");
 });
+
+test("renders the grid generator and persists grid settings", async ({ page }) => {
+  await page.getByRole("tab", { name: /Grid Generator/ }).click();
+  await expect(page).toHaveURL(/\/grid-generator$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Grid Generator" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Grid Parameters" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Grid Preview")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Model Output" }),
+  ).toBeVisible();
+
+  await page.getByRole("spinbutton", { name: "Width u" }).fill("4");
+  await page.getByRole("spinbutton", { name: "Width u" }).blur();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const storedSettings = window.localStorage.getItem(
+          "gridfinity-grid-generator-settings",
+        );
+
+        return storedSettings ? JSON.parse(storedSettings).params.widthUnits : 0;
+      }),
+    )
+    .toBe(4);
+
+  await page
+    .getByLabel("Grid Parameters")
+    .getByRole("button", { name: "Generate" })
+    .click();
+  await expect(page.getByText("OpenSCAD Preview Ready")).toBeVisible({
+    timeout: 60_000,
+  });
+});

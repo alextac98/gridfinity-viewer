@@ -13,6 +13,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AppUpcoming } from "@/apps/AppUpcoming";
 import type {
+  GridfinityAppConfig,
   GridfinityReadyStatusTag,
   GridfinityUpcomingStatusTag,
 } from "@/apps/types";
@@ -22,7 +23,6 @@ import {
   defaultAppId,
   getAppPath,
   isRegisteredAppId,
-  type RegisteredApp,
   type RegisteredAppId,
 } from "./appRegistry";
 import styles from "./AppShell.module.css";
@@ -94,7 +94,7 @@ function AppWorkspacePanel({
   app,
   isActive,
 }: {
-  app: RegisteredApp;
+  app: GridfinityAppConfig;
   isActive: boolean;
 }) {
   return (
@@ -114,7 +114,7 @@ function AppWorkspacePanel({
         <p className={styles.topbarDescription}>{app.description}</p>
       </header>
 
-      {"Component" in app ? (
+      {!app.comingSoon ? (
         <app.Component accent={app.accent} />
       ) : (
         <AppUpcoming

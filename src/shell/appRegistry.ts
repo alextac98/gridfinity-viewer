@@ -1,5 +1,6 @@
 import { Box, Grid3X3, Tag } from "lucide-react";
 import { BinGeneratorApp } from "@/apps/bin-generator/BinGeneratorApp";
+import { GridGeneratorApp } from "@/apps/grid-generator/GridGeneratorApp";
 import { LabelGeneratorApp } from "@/apps/label-generator/LabelGeneratorApp";
 import type { GridfinityAppConfig } from "@/apps/types";
 
@@ -21,7 +22,8 @@ export const apps = [
     description:
       "Lay out baseplates, wall grids, weighted plates, and printable workbench grids.",
     icon: Grid3X3,
-    comingSoon: true,
+    Component: GridGeneratorApp,
+    statusTag: "alpha",
     accent: "blue",
   },
   {

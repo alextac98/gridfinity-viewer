@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { gridfinityBaseplateCacheDefinition } from "./baseplateCache";
 import { gridfinityBinCacheDefinition } from "./binCache";
 
 export type OpenScadCacheModel = {
@@ -9,7 +10,10 @@ export type OpenScadCacheModel = {
   createCanonicalSettings: (params: unknown) => unknown;
 };
 
-const cacheModels = [gridfinityBinCacheDefinition] as const;
+const cacheModels = [
+  gridfinityBinCacheDefinition,
+  gridfinityBaseplateCacheDefinition,
+] as const;
 
 export function getOpenScadCacheModel(modelId: string) {
   return cacheModels.find((model) => model.id === modelId) ?? null;
