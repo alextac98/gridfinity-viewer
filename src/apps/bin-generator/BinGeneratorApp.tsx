@@ -239,6 +239,21 @@ function createParamsKey(params: GridfinityBinParameters) {
   });
 }
 
+function createBinAnalyticsProperties(params: GridfinityBinParameters) {
+  return {
+    width_units: params.widthUnits,
+    depth_units: params.depthUnits,
+    height_units: params.heightUnits,
+    vertical_chambers: params.verticalChambers,
+    horizontal_chambers: params.horizontalChambers,
+    lip_style: params.lipStyle,
+    label_style: params.labelStyle,
+    magnets: params.magnets,
+    screws: params.screws,
+    filled_in: params.filledIn,
+  };
+}
+
 export function BinGeneratorApp({ accent }: GridfinityAppProps) {
   const [initialSettings] = useState(readStoredBinSettings);
   const [params, setParams] = useState(initialSettings.params);
@@ -326,19 +341,12 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
           setDraft={setDraft}
           clearRenderError={model.clearRenderError}
           onGenerate={() => {
-            captureEvent("bin_model_generate_requested", {
-              width_units: params.widthUnits,
-              depth_units: params.depthUnits,
-              height_units: params.heightUnits,
-              vertical_chambers: params.verticalChambers,
-              horizontal_chambers: params.horizontalChambers,
-              lip_style: params.lipStyle,
-              label_style: params.labelStyle,
-              magnets: params.magnets,
-              screws: params.screws,
-              filled_in: params.filledIn,
+            const analyticsProperties = createBinAnalyticsProperties(params);
+            captureEvent("bin_model_generate_requested", analyticsProperties);
+            void model.requestRender(params, {
+              completionEventName: "bin_model_preview_ready",
+              properties: analyticsProperties,
             });
-            void model.requestRender(params);
           }}
           onReset={reset}
         />
@@ -353,6 +361,7 @@ export function BinGeneratorApp({ accent }: GridfinityAppProps) {
           groundPlane={groundPlane.groundPlane}
           isLoading={model.isRendering}
           loadingMessage={model.isRendering ? model.renderStatus : undefined}
+          onModelVisible={model.markPreviewVisible}
           viewStorageKey="gridfinity-bin-generator-preview-view"
         />
       }

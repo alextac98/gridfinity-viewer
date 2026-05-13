@@ -1,6 +1,6 @@
 import posthog from "posthog-js";
 
-type EventProperties = Record<string, unknown>;
+export type AnalyticsEventProperties = Record<string, unknown>;
 
 const postHogToken =
   process.env.NEXT_PUBLIC_POSTHOG_TOKEN ?? process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -24,7 +24,10 @@ export function initializePostHog() {
   });
 }
 
-export function captureEvent(eventName: string, properties?: EventProperties) {
+export function captureEvent(
+  eventName: string,
+  properties?: AnalyticsEventProperties,
+) {
   if (!isPostHogEnabled) {
     return;
   }

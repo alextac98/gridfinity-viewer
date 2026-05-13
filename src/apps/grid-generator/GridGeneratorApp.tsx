@@ -321,6 +321,16 @@ function createParamsKey(params: GridfinityBaseplateParameters) {
   });
 }
 
+function createGridAnalyticsProperties(params: GridfinityBaseplateParameters) {
+  return {
+    width_units: params.widthUnits,
+    depth_units: params.depthUnits,
+    plate_style: params.plateStyle,
+    magnets: params.magnets,
+    build_plate_mode: params.buildPlateMode,
+  };
+}
+
 export function GridGeneratorApp({ accent }: GridfinityAppProps) {
   const [initialSettings] = useState(readStoredGridSettings);
   const [params, setParams] = useState(initialSettings.params);
@@ -408,14 +418,12 @@ export function GridGeneratorApp({ accent }: GridfinityAppProps) {
           setDraft={setDraft}
           clearRenderError={model.clearRenderError}
           onGenerate={() => {
-            captureEvent("grid_model_generate_requested", {
-              width_units: params.widthUnits,
-              depth_units: params.depthUnits,
-              plate_style: params.plateStyle,
-              magnets: params.magnets,
-              build_plate_mode: params.buildPlateMode,
+            const analyticsProperties = createGridAnalyticsProperties(params);
+            captureEvent("grid_model_generate_requested", analyticsProperties);
+            void model.requestRender(params, {
+              completionEventName: "grid_model_preview_ready",
+              properties: analyticsProperties,
             });
-            void model.requestRender(params);
           }}
           onReset={reset}
         />
@@ -430,6 +438,7 @@ export function GridGeneratorApp({ accent }: GridfinityAppProps) {
           groundPlane={groundPlane.groundPlane}
           isLoading={model.isRendering}
           loadingMessage={model.isRendering ? model.renderStatus : undefined}
+          onModelVisible={model.markPreviewVisible}
           viewStorageKey="gridfinity-grid-generator-preview-view"
         />
       }

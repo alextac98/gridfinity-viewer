@@ -38,6 +38,7 @@ type OpenScadPreviewProps = {
   groundPlane?: GroundPlaneConfig;
   isLoading?: boolean;
   loadingMessage?: string;
+  onModelVisible?: (stl: Uint8Array) => void;
   viewStorageKey?: string;
 };
 
@@ -415,6 +416,7 @@ export function OpenScadPreview({
   groundPlane,
   isLoading = false,
   loadingMessage,
+  onModelVisible,
   viewStorageKey,
 }: OpenScadPreviewProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -430,10 +432,15 @@ export function OpenScadPreview({
   const hasSetInitialViewRef = useRef(false);
   const storedViewRef = useRef(readStoredPreviewView(viewStorageKey));
   const themeRef = useRef<PreviewTheme | null>(null);
+  const onModelVisibleRef = useRef(onModelVisible);
   const [viewerError, setViewerError] = useState<{
     stl: Uint8Array;
     message: string;
   } | null>(null);
+
+  useEffect(() => {
+    onModelVisibleRef.current = onModelVisible;
+  }, [onModelVisible]);
 
   const snapToView = useCallback((view: OrientationView) => {
     const camera = cameraRef.current;
@@ -736,7 +743,12 @@ export function OpenScadPreview({
       hasSetInitialViewRef.current = true;
     }
 
+    const visibleFrame = requestAnimationFrame(() => {
+      onModelVisibleRef.current?.(stl);
+    });
+
     return () => {
+      cancelAnimationFrame(visibleFrame);
       scene.remove(model);
     };
   }, [snapToView, stl]);
