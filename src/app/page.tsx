@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { defaultAppId, getAppPath } from "@/shell/appRegistry";
+import { AppShell } from "@/shell/AppShell";
 
 export default function Home() {
-  redirect(getAppPath(defaultAppId));
+  return <AppShell />;
 }

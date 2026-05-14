@@ -9,6 +9,7 @@ import {
   Sun,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AppUpcoming } from "@/apps/AppUpcoming";
@@ -27,6 +28,7 @@ import {
   type RegisteredAppId,
 } from "./appRegistry";
 import styles from "./AppShell.module.css";
+import { HomePage } from "./HomePage";
 
 function getPreferredTheme(): "light" | "dark" {
   const storedTheme = window.localStorage.getItem("gridfinity-theme");
@@ -144,6 +146,7 @@ function AppWorkspacePanel({
 export function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
+  const isHomeRoute = pathname === "/";
   const activeAppId = getActiveAppId(pathname);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -156,6 +159,7 @@ export function AppShell() {
     getServerThemeSnapshot,
   );
   const activeApp = apps.find((app) => app.id === activeAppId) ?? apps[0];
+  const isShellCollapsed = isHomeRoute || isSidebarCollapsed;
   const visitedApps = useMemo(() => {
     const mountedAppIds = visitedAppIds.includes(activeAppId)
       ? visitedAppIds
@@ -167,13 +171,13 @@ export function AppShell() {
   const currentYear = new Date().getFullYear();
 
   const navigateToApp = (appId: RegisteredAppId) => {
-    if (appId === activeAppId) {
+    if (!isHomeRoute && appId === activeAppId) {
       return;
     }
 
     captureEvent("app_navigated", {
       app_id: appId,
-      from_app_id: activeAppId,
+      from_app_id: isHomeRoute ? "home" : activeAppId,
     });
     setVisitedAppIds((current) =>
       current.includes(appId) ? current : [...current, appId],
@@ -200,33 +204,50 @@ export function AppShell() {
   return (
     <main
       className={`${styles.page} ${
-        isSidebarCollapsed ? styles.collapsedPage : ""
-      } ${isDark ? styles.darkTheme : ""}`}
+        isShellCollapsed ? styles.collapsedPage : ""
+      } ${isHomeRoute ? styles.homePage : ""} ${isDark ? styles.darkTheme : ""}`}
     >
       <aside
         className={`${styles.sidebar} ${
-          isSidebarCollapsed ? styles.collapsedSidebar : ""
+          isShellCollapsed ? styles.collapsedSidebar : ""
         }`}
       >
         <div className={styles.sidebarHeader}>
-          <a className={styles.brand} href="#" aria-label="Gridfinity Center">
+          <Link
+            className={styles.brand}
+            href="/"
+            aria-label="Gridfinity Center"
+          >
             <Boxes aria-hidden="true" size={24} />
             <span>Gridfinity Center</span>
-          </a>
+          </Link>
 
           <div className={styles.sidebarControls}>
             <button
               aria-label={
-                isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                isHomeRoute
+                  ? "Sidebar minimized on home"
+                  : isShellCollapsed
+                    ? "Expand sidebar"
+                    : "Collapse sidebar"
               }
               className={styles.sidebarIconButton}
-              onClick={() =>
-                setIsSidebarCollapsed((isCollapsed) => !isCollapsed)
+              disabled={isHomeRoute}
+              onClick={() => {
+                if (!isHomeRoute) {
+                  setIsSidebarCollapsed((isCollapsed) => !isCollapsed);
+                }
+              }}
+              title={
+                isHomeRoute
+                  ? "Sidebar minimized on home"
+                  : isShellCollapsed
+                    ? "Expand sidebar"
+                    : "Collapse sidebar"
               }
-              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               type="button"
             >
-              {isSidebarCollapsed ? (
+              {isShellCollapsed ? (
                 <PanelLeftOpen aria-hidden="true" size={18} />
               ) : (
                 <PanelLeftClose aria-hidden="true" size={18} />
@@ -238,7 +259,7 @@ export function AppShell() {
         <div className={styles.appTabs} role="tablist" aria-label="Apps">
           {apps.map((app) => {
             const Icon = app.icon;
-            const isActive = app.id === activeApp.id;
+            const isActive = !isHomeRoute && app.id === activeApp.id;
             const statusTag =
               "statusTag" in app
                 ? app.statusTag
@@ -307,14 +328,22 @@ export function AppShell() {
       </aside>
 
       <ToastProvider>
-        <div className={styles.workspace}>
-          {visitedApps.map((app) => (
-            <AppWorkspacePanel
-              app={app}
-              isActive={app.id === activeApp.id}
-              key={app.id}
-            />
-          ))}
+        <div
+          className={`${styles.workspace} ${
+            isHomeRoute ? styles.homeWorkspace : ""
+          }`}
+        >
+          {isHomeRoute ? (
+            <HomePage />
+          ) : (
+            visitedApps.map((app) => (
+              <AppWorkspacePanel
+                app={app}
+                isActive={app.id === activeApp.id}
+                key={app.id}
+              />
+            ))
+          )}
         </div>
       </ToastProvider>
 
