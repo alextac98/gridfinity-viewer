@@ -108,9 +108,14 @@ environment secrets to each:
 
 ```bash
 RENDER_AUTH_TOKEN=      # shared secret expected by the render service
+RENDER_SSH_KEY=         # private SSH key for deployment
+```
+
+Add these environment variables to each:
+
+```bash
 RENDER_DEPLOY_PATH=     # remote folder, e.g. /opt/gridfinity-render
 RENDER_HOST=            # render service hostname, e.g. render.example.com
-RENDER_SSH_KEY=         # private SSH key for deployment
 RENDER_USER=            # SSH user
 ```
 

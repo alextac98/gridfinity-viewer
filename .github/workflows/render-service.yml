@@ -69,15 +69,15 @@ jobs:
     permissions:
       contents: read
     env:
-      DEPLOY_PATH: ${{ secrets.RENDER_DEPLOY_PATH }}
+      DEPLOY_PATH: ${{ vars.RENDER_DEPLOY_PATH || secrets.RENDER_DEPLOY_PATH }}
       RENDER_AUTH_TOKEN: ${{ secrets.RENDER_AUTH_TOKEN }}
-      RENDER_HOST: ${{ secrets.RENDER_HOST }}
+      RENDER_HOST: ${{ vars.RENDER_HOST || secrets.RENDER_HOST }}
       RENDER_MAX_CONCURRENCY: ${{ vars.RENDER_MAX_CONCURRENCY || '1' }}
       RENDER_MAX_QUEUE_LENGTH: ${{ vars.RENDER_MAX_QUEUE_LENGTH || '10' }}
       RENDER_SERVICE_IMAGE: ${{ needs.build.outputs.image_ref }}
       RENDER_SSH_KEY: ${{ secrets.RENDER_SSH_KEY }}
       RENDER_TIMEOUT_MS: ${{ vars.RENDER_TIMEOUT_MS || '120000' }}
-      RENDER_USER: ${{ secrets.RENDER_USER }}
+      RENDER_USER: ${{ vars.RENDER_USER || secrets.RENDER_USER }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
