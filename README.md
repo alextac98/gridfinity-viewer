@@ -116,6 +116,7 @@ Add these environment variables to each:
 ```bash
 RENDER_DEPLOY_PATH=     # remote folder, e.g. /opt/gridfinity-render
 RENDER_HOST=            # render service hostname, e.g. render.example.com
+RENDER_SSH_HOST=        # VPS SSH hostname or IP; defaults to RENDER_HOST
 RENDER_USER=            # SSH user
 ```
 
@@ -135,8 +136,8 @@ Deployment assumes the VPS already runs `nginxproxy/nginx-proxy` with
 `acme-companion` on an external Docker network named `nginx-proxy`. The render
 service joins that network, advertises `RENDER_HOST` through `VIRTUAL_HOST` and
 `LETSENCRYPT_HOST`, and exposes container port `8080` only to the proxy. DNS for
-`RENDER_HOST` should point at the VPS, and the deploy workflow also uses that
-host for SSH.
+`RENDER_HOST` should point at the VPS. Set `RENDER_SSH_HOST` separately when the
+public render hostname is not reachable over SSH.
 
 The deploy job copies `render-service/docker-compose.deploy.yml` to the VPS,
 writes an `.env` file with the selected image tag, pulls the public GHCR image,

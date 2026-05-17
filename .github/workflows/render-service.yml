@@ -75,6 +75,7 @@ jobs:
       RENDER_MAX_CONCURRENCY: ${{ vars.RENDER_MAX_CONCURRENCY || '1' }}
       RENDER_MAX_QUEUE_LENGTH: ${{ vars.RENDER_MAX_QUEUE_LENGTH || '10' }}
       RENDER_SERVICE_IMAGE: ${{ needs.build.outputs.image_ref }}
+      RENDER_SSH_HOST: ${{ vars.RENDER_SSH_HOST || secrets.RENDER_SSH_HOST || vars.RENDER_HOST || secrets.RENDER_HOST }}
       RENDER_SSH_KEY: ${{ secrets.RENDER_SSH_KEY }}
       RENDER_TIMEOUT_MS: ${{ vars.RENDER_TIMEOUT_MS || '120000' }}
       RENDER_USER: ${{ vars.RENDER_USER || secrets.RENDER_USER }}
@@ -85,7 +86,7 @@ jobs:
       - name: Validate deployment configuration
         run: |
           missing=0
-          for name in DEPLOY_PATH RENDER_AUTH_TOKEN RENDER_HOST RENDER_SSH_KEY RENDER_USER; do
+          for name in DEPLOY_PATH RENDER_AUTH_TOKEN RENDER_HOST RENDER_SSH_HOST RENDER_SSH_KEY RENDER_USER; do
             if [ -z "${!name}" ]; then
               echo "::error title=Missing deployment configuration::${name} is required for the selected GitHub Environment."
               missing=1
@@ -98,7 +99,7 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$RENDER_SSH_KEY" > ~/.ssh/render_deploy_key
           chmod 600 ~/.ssh/render_deploy_key
-          ssh-keyscan -H "$RENDER_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 30 -H "$RENDER_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Prepare deployment files
         run: |
@@ -114,13 +115,13 @@ jobs:
 
       - name: Upload deployment files
         run: |
-          ssh -i ~/.ssh/render_deploy_key "$RENDER_USER@$RENDER_HOST" "mkdir -p '$DEPLOY_PATH'"
-          scp -i ~/.ssh/render_deploy_key docker-compose.yml "$RENDER_USER@$RENDER_HOST:$DEPLOY_PATH/docker-compose.yml"
-          scp -i ~/.ssh/render_deploy_key render-service.env "$RENDER_USER@$RENDER_HOST:$DEPLOY_PATH/.env"
+          ssh -i ~/.ssh/render_deploy_key "$RENDER_USER@$RENDER_SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
+          scp -i ~/.ssh/render_deploy_key docker-compose.yml "$RENDER_USER@$RENDER_SSH_HOST:$DEPLOY_PATH/docker-compose.yml"
+          scp -i ~/.ssh/render_deploy_key render-service.env "$RENDER_USER@$RENDER_SSH_HOST:$DEPLOY_PATH/.env"
 
       - name: Deploy on VPS
         run: |
-          ssh -i ~/.ssh/render_deploy_key "$RENDER_USER@$RENDER_HOST" \
+          ssh -i ~/.ssh/render_deploy_key "$RENDER_USER@$RENDER_SSH_HOST" \
             "cd '$DEPLOY_PATH' \
               && docker compose pull render-service \
               && docker compose up -d render-service \
